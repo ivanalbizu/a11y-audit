@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { saveAudits, loadAudits } from "./utils/storage";
 import { css } from "./styles/theme";
 import Topbar from "./components/Topbar";
@@ -7,26 +7,22 @@ import Dashboard from "./components/Dashboard";
 import AuditView from "./components/AuditView";
 
 export default function App() {
-  const [audits, setAudits] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [audits, setAudits] = useState(() => loadAudits());
   const [activeAuditId, setActiveAuditId] = useState(null);
-
-  useEffect(() => {
-    setAudits(loadAudits());
-    setLoading(false);
-  }, []);
 
   const persist = useCallback((updated) => {
     setAudits(updated);
     saveAudits(updated);
   }, []);
 
-  const createAudit = (domain, auditor) => {
+  const createAudit = (domain, auditor, startDate, endDate) => {
     const audit = {
       id: Date.now().toString(),
       domain,
       auditor,
       createdAt: new Date().toISOString(),
+      startDate: startDate || null,
+      endDate: endDate || null,
       checks: {},
       notes: {},
     };
@@ -45,12 +41,6 @@ export default function App() {
   };
 
   const activeAudit = audits.find(a => a.id === activeAuditId);
-
-  if (loading) return (
-    <div style={{ ...css.app, alignItems:"center", justifyContent:"center" }} role="status" aria-live="polite">
-      <div style={{ fontSize:"0.9rem", color:"#A0A0B8" }}>Cargando auditorías...</div>
-    </div>
-  );
 
   return (
     <div style={css.app}>

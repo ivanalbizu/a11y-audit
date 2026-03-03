@@ -1,4 +1,4 @@
-import { SEV_CONFIG, TIPO_CONFIG, STATUS_CONFIG } from "../data/config";
+import { SEV_CONFIG, TIPO_CONFIG, STATUS_CONFIG, NIVEL_CONFIG } from "../data/config";
 import { css } from "../styles/theme";
 
 export function Badge({ sev }) {
@@ -9,6 +9,12 @@ export function Badge({ sev }) {
 export function TipoBadge({ tipo }) {
   const c = TIPO_CONFIG[tipo];
   return <span style={{ ...css.pill(c.color, "transparent", "transparent") }}>{c.label}</span>;
+}
+
+export function NivelBadge({ nivel }) {
+  const c = NIVEL_CONFIG[nivel];
+  if (!c) return null;
+  return <span style={css.pill(c.color, c.bg, c.border)}>{c.label}</span>;
 }
 
 export function StatusSelect({ value, onChange }) {

@@ -1,6 +1,6 @@
 import { CHECKLIST } from "../data/checklist";
 import { css } from "../styles/theme";
-import { exportAudits, importAudits } from "../utils/storage";
+import { exportAudits, importAudits, getStorageSizeMB, checkStorageCapacity } from "../utils/storage";
 
 export default function Topbar({ audits, activeAuditId, onImport, onDelete }) {
   return (
@@ -11,6 +11,7 @@ export default function Topbar({ audits, activeAuditId, onImport, onDelete }) {
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:"0.75rem" }}>
         <span style={{ fontSize:"0.8rem", color:"#A0A0B8" }}>{audits.length} auditorías · {CHECKLIST.length} ítems</span>
+        <span style={{ fontSize:"0.75rem", color: checkStorageCapacity() === "warning" ? "#FFB347" : checkStorageCapacity() === "full" ? "#FF6B6B" : "#7A7A94", fontFamily:"'DM Mono',monospace" }}>{getStorageSizeMB()} MB</span>
         <button style={css.btn("#6CB4FF")} onClick={() => exportAudits(audits)} aria-label="Exportar auditorías como JSON">
           ↓ Exportar JSON
         </button>

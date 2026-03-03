@@ -2,15 +2,25 @@ import { useState } from "react";
 import { CHECKLIST } from "../data/checklist";
 import { css } from "../styles/theme";
 
+function formatDateRange(audit) {
+  const start = audit.startDate ? new Date(audit.startDate).toLocaleDateString("es-ES") : null;
+  const end = audit.endDate ? new Date(audit.endDate).toLocaleDateString("es-ES") : null;
+  if (start && end) return `${start} → ${end}`;
+  if (start) return `Desde ${start}`;
+  return new Date(audit.createdAt).toLocaleDateString("es-ES");
+}
+
 export default function Dashboard({ audits, onSelect, onCreate }) {
   const [newDomain, setNewDomain] = useState("");
   const [newAuditor, setNewAuditor] = useState("");
+  const [newStartDate, setNewStartDate] = useState("");
+  const [newEndDate, setNewEndDate] = useState("");
   const [creating, setCreating] = useState(false);
 
   const doCreate = () => {
     if (!newDomain.trim()) return;
-    onCreate(newDomain.trim(), newAuditor.trim() || "Sin especificar");
-    setNewDomain(""); setNewAuditor(""); setCreating(false);
+    onCreate(newDomain.trim(), newAuditor.trim() || "Sin especificar", newStartDate || null, newEndDate || null);
+    setNewDomain(""); setNewAuditor(""); setNewStartDate(""); setNewEndDate(""); setCreating(false);
   };
 
   const totalItems = CHECKLIST.length;
@@ -36,6 +46,14 @@ export default function Dashboard({ audits, onSelect, onCreate }) {
             <div>
               <label htmlFor="audit-auditor" style={{ fontSize:"0.75rem", color:"#C0C0D0", letterSpacing:"0.08em", textTransform:"uppercase", display:"block", marginBottom:"0.35rem" }}>Auditor/a</label>
               <input id="audit-auditor" style={css.input} placeholder="Nombre del auditor" value={newAuditor} onChange={e => setNewAuditor(e.target.value)} onKeyDown={e => e.key === "Enter" && doCreate()} />
+            </div>
+            <div>
+              <label htmlFor="audit-start" style={{ fontSize:"0.75rem", color:"#C0C0D0", letterSpacing:"0.08em", textTransform:"uppercase", display:"block", marginBottom:"0.35rem" }}>Fecha inicio</label>
+              <input id="audit-start" type="date" style={css.input} value={newStartDate} onChange={e => setNewStartDate(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="audit-end" style={{ fontSize:"0.75rem", color:"#C0C0D0", letterSpacing:"0.08em", textTransform:"uppercase", display:"block", marginBottom:"0.35rem" }}>Fecha fin prevista</label>
+              <input id="audit-end" type="date" style={css.input} value={newEndDate} onChange={e => setNewEndDate(e.target.value)} />
             </div>
           </div>
           <div style={{ display:"flex", gap:"0.5rem" }}>
@@ -77,7 +95,7 @@ export default function Dashboard({ audits, onSelect, onCreate }) {
                     <div style={{ flex:1 }}>
                       <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:"1.05rem", marginBottom:"0.25rem", color:"#E8E8F0" }}>{audit.domain}</div>
                       <div style={{ fontSize:"0.8rem", color:"#A0A0B8", marginBottom:"0.75rem" }}>
-                        {audit.auditor} · {new Date(audit.createdAt).toLocaleDateString("es-ES")} · WCAG 2.2 AA
+                        {audit.auditor} · {formatDateRange(audit)} · WCAG 2.2 AA
                       </div>
                       <div style={{ display:"flex", gap:"0.6rem", flexWrap:"wrap" }}>
                         <span style={css.tag("#FF6B6B")}>{fails} fallan</span>

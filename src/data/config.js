@@ -21,6 +21,12 @@ export const TIPO_CONFIG = {
   both:   { label:"⚡ Ambos",   color:"#FFB347" },
 };
 
+export const NIVEL_CONFIG = {
+  A:   { label: "A",   color: "#5ED67E", bg: "rgba(52,199,89,0.12)",   border: "rgba(52,199,89,0.30)" },
+  AA:  { label: "AA",  color: "#6CB4FF", bg: "rgba(108,180,255,0.12)", border: "rgba(108,180,255,0.30)" },
+  AAA: { label: "AAA", color: "#C88AFF", bg: "rgba(200,138,255,0.12)", border: "rgba(200,138,255,0.30)" },
+};
+
 export const STATUS_CONFIG = {
   pending:  { label:"Pendiente", color:"#A0A0B8", icon:"○" },
   pass:     { label:"Pasa",      color:"#5ED67E", icon:"✅" },

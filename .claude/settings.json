@@ -8,7 +8,10 @@
       "Bash(node -e \":*)",
       "Bash(npx --yes xlsx-cli accessibility-checklists.xlsx)",
       "Bash(node --input-type=module -e \":*)",
-      "Bash(node -e \"import\\(''./src/data/checklist.js''\\).then\\(m => console.log\\(''Items:'', m.CHECKLIST.length\\)\\)\")"
+      "Bash(node -e \"import\\(''./src/data/checklist.js''\\).then\\(m => console.log\\(''Items:'', m.CHECKLIST.length\\)\\)\")",
+      "Bash(node --input-type=module -e ':*)",
+      "Bash(pnpm build)",
+      "Bash(pnpm lint)"
     ]
   }
 }

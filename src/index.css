@@ -1,0 +1,66 @@
+:root {
+  font-family: 'DM Mono', 'Courier New', monospace;
+  line-height: 1.6;
+  font-weight: 400;
+  color-scheme: dark;
+  color: #E8E8F0;
+  background-color: #0A0A12;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Focus visible — global, high contrast ring on all interactive elements */
+:focus-visible {
+  outline: 3px solid #6CB4FF;
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+a {
+  font-weight: 500;
+  color: #6CB4FF;
+  text-decoration: underline;
+}
+a:hover {
+  color: #8EC8FF;
+}
+
+button, select, input, textarea {
+  font-family: inherit;
+}
+
+button {
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #3A3A50;
+  border-radius: 3px;
+}

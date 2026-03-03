@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite build)",
+      "Bash(python3 -c \":*)",
+      "Bash(pip3 install openpyxl -q)",
+      "Bash(python3 -m pip install openpyxl -q)",
+      "Bash(node -e \":*)",
+      "Bash(npx --yes xlsx-cli accessibility-checklists.xlsx)",
+      "Bash(node --input-type=module -e \":*)",
+      "Bash(node -e \"import\\(''./src/data/checklist.js''\\).then\\(m => console.log\\(''Items:'', m.CHECKLIST.length\\)\\)\")"
+    ]
+  }
+}

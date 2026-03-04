@@ -8,7 +8,8 @@ function nextVersionId() {
   return `v-${versionCounter}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export default function VersionsView({ audit, onUpdate }) {
+export default function VersionsView({ audit, onUpdate, allItems }) {
+  const itemList = allItems || CHECKLIST;
   const versions = audit.versions || [];
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [compareIdx, setCompareIdx] = useState(null);
@@ -16,8 +17,8 @@ export default function VersionsView({ audit, onUpdate }) {
   const handleCreate = () => {
     if (!window.confirm("¿Guardar una snapshot del estado actual como nueva versión?")) return;
     const checks = audit.checks || {};
-    const totalDone = CHECKLIST.filter(i => (checks[i.id] || "pending") !== "pending").length;
-    const totalPasses = CHECKLIST.filter(i => (checks[i.id] || "pending") === "pass").length;
+    const totalDone = itemList.filter(i => (checks[i.id] || "pending") !== "pending").length;
+    const totalPasses = itemList.filter(i => (checks[i.id] || "pending") === "pass").length;
     const conformity = totalDone > 0 ? Math.round((totalPasses / totalDone) * 100) : 0;
     const version = {
       versionId: nextVersionId(),
@@ -32,7 +33,7 @@ export default function VersionsView({ audit, onUpdate }) {
 
   const getComparison = (a, b) => {
     const changes = [];
-    for (const item of CHECKLIST) {
+    for (const item of itemList) {
       const statusA = a.checks[item.id] || "pending";
       const statusB = b.checks[item.id] || "pending";
       if (statusA !== statusB) {
@@ -103,13 +104,13 @@ export default function VersionsView({ audit, onUpdate }) {
           <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"0.75rem", marginBottom:"1rem" }}>
             {(() => {
               const checks = selectedVersion.checks;
-              const done = CHECKLIST.filter(i => (checks[i.id] || "pending") !== "pending").length;
-              const fails = CHECKLIST.filter(i => (checks[i.id] || "pending") === "fail").length;
-              const passes = CHECKLIST.filter(i => (checks[i.id] || "pending") === "pass").length;
+              const done = itemList.filter(i => (checks[i.id] || "pending") !== "pending").length;
+              const fails = itemList.filter(i => (checks[i.id] || "pending") === "fail").length;
+              const passes = itemList.filter(i => (checks[i.id] || "pending") === "pass").length;
               return [
                 { label:"Fallan", val:fails, color:"#FF6B6B" },
                 { label:"Pasan", val:passes, color:"#5ED67E" },
-                { label:"Pendientes", val:CHECKLIST.length - done, color:"#A0A0B8" },
+                { label:"Pendientes", val:itemList.length - done, color:"#A0A0B8" },
                 { label:"Conformidad", val:`${selectedVersion.conformity}%`, color: selectedVersion.conformity < 40 ? "#FF6B6B" : selectedVersion.conformity < 70 ? "#FFE066" : "#5ED67E" },
               ].map(s => (
                 <div key={s.label} style={{ textAlign:"center", padding:"0.5rem" }}>

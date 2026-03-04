@@ -2,7 +2,8 @@ import { CHECKLIST } from "../data/checklist";
 import { AREA_COLORS } from "../data/config";
 import { css } from "../styles/theme";
 
-export default function SummaryView({ audit, checks, statsByArea, totalFails, totalPasses, totalDone, critFails, total }) {
+export default function SummaryView({ audit, checks, statsByArea, totalFails, totalPasses, totalDone, critFails, total, allItems }) {
+  const itemList = allItems || CHECKLIST;
   const pct = Math.round((totalDone / total) * 100);
   const conformPct = totalDone > 0 ? Math.round((totalPasses / totalDone) * 100) : 0;
 
@@ -62,7 +63,7 @@ export default function SummaryView({ audit, checks, statsByArea, totalFails, to
         <div style={{ ...css.card, borderColor:"rgba(255,107,107,0.25)" }} role="alert">
           <h3 style={{ fontSize:"0.8rem", color:"#FF6B6B", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:700, marginBottom:"1rem", margin:"0 0 1rem" }}>Ítems críticos con fallo</h3>
           <ul style={{ display:"flex", flexDirection:"column", gap:"0.4rem", listStyle:"none", padding:0, margin:0 }}>
-            {CHECKLIST.filter(i => i.sev === "critical" && (checks[i.id]||"pending") === "fail").map(item => (
+            {itemList.filter(i => i.sev === "critical" && (checks[i.id]||"pending") === "fail").map(item => (
               <li key={item.id} style={{ display:"flex", alignItems:"center", gap:"0.6rem", padding:"0.55rem 0.8rem", background:"rgba(255,107,107,0.08)", border:"1px solid rgba(255,107,107,0.2)", borderRadius:"4px" }}>
                 <span style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", color:"#E8FF47" }}>{item.id}</span>
                 <span style={{ flex:1, fontSize:"0.875rem" }}>{item.item}</span>

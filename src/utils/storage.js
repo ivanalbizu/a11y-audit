@@ -43,6 +43,16 @@ export function exportAudits(audits) {
   URL.revokeObjectURL(url);
 }
 
+export function exportSingleAudit(audit) {
+  const blob = new Blob([JSON.stringify(audit, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `audit-${audit.domain.replace(/[^a-z0-9]/gi, "-")}-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function importAudits(file, onLoad) {
   const reader = new FileReader();
   reader.onload = (e) => {

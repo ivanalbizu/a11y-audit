@@ -1,11 +1,11 @@
 # A11Y Audit Manager
 
-Aplicación web para gestionar auditorías de accesibilidad siguiendo el estándar **WCAG 2.2 nivel AA**. Permite crear, revisar y exportar auditorías completas con un checklist de **107 ítems** organizados en 7 áreas.
+Aplicación web para gestionar auditorías de accesibilidad siguiendo el estándar **WCAG 2.2 nivel AA**. Permite crear, revisar y exportar auditorías completas con un checklist de **115 ítems** organizados en 7 áreas.
 
 ## Funcionalidades
 
 - **Dashboard** — Vista general de todas las auditorías con progreso y estadísticas
-- **Checklist interactivo** — 107 criterios de verificación con filtros por área, severidad, estado, tipo y nivel WCAG (A/AA/AAA)
+- **Checklist interactivo** — 115 criterios de verificación con filtros por área, severidad, estado, tipo y nivel WCAG (A/AA/AAA)
 - **Ítems personalizados** — Añadir ítems propios a cada auditoría con formulario completo (área, WCAG, severidad, tipo, etc.)
 - **Vista resumen** — Estadísticas por área WCAG, porcentaje de conformidad y listado de fallos críticos
 - **Historial de versiones** — Snapshots del estado de la auditoría con comparativa entre versiones
@@ -47,7 +47,7 @@ Sin dependencias externas de UI. Estilos inline mediante un sistema de tema cent
 ```
 src/
 ├── data/
-│   ├── checklist.js    # 107 ítems del checklist WCAG 2.2
+│   ├── checklist.js    # 115 ítems del checklist WCAG 2.2
 │   ├── config.js       # Configuración de severidad, estados, niveles, áreas y colores
 │   ├── glossary.js     # 18 acrónimos de accesibilidad con definiciones
 │   └── wcagLinks.js    # Mapa de criterios WCAG → URLs W3C Understanding

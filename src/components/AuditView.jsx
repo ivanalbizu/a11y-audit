@@ -4,7 +4,7 @@ import { SEV_CONFIG, EFFORT_CONFIG, STATUS_CONFIG, TIPO_CONFIG, NIVEL_CONFIG, AR
 import { css } from "../styles/theme";
 import { Badge, TipoBadge, NivelBadge, StatusSelect } from "./StatusBadges";
 import SummaryView from "./SummaryView";
-import { getWcagUrl } from "../data/wcagLinks";
+import { getWcagUrls } from "../data/wcagLinks";
 import VersionsView from "./VersionsView";
 import GlossaryView from "./GlossaryView";
 import { checkStorageCapacity, getStorageSizeMB, exportSingleAudit } from "../utils/storage";
@@ -296,7 +296,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                     const status = checks[item.id] || "pending";
                     const isOpen = expanded === item.id;
                     const detailsId = `details-${item.id}`;
-                    const wcagUrl = getWcagUrl(item.wcag);
+                    const wcagUrls = getWcagUrls(item.wcag);
                     return (
                       <div key={item.id} role="row" style={{ background:"#10101C", border:`1px solid ${isOpen ? "#3A3A50" : "#2A2A3E"}`, borderRadius:"6px", overflow:"hidden", transition:"border-color 0.15s" }}>
                         <div
@@ -312,8 +312,12 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                           <span role="cell"><NivelBadge nivel={item.nivel} /></span>
                           <span role="cell" onClick={e => e.stopPropagation()}>
                             {item.wcag !== "—" && (
-                              wcagUrl ? (
-                                <a href={wcagUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", color:"#6CB4FF", textDecoration:"none" }} aria-label={`WCAG ${item.wcag} — ver normativa`}>{item.wcag} ↗</a>
+                              wcagUrls ? (
+                                <span style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", display:"flex", gap:"0.35rem", flexWrap:"wrap" }}>
+                                  {wcagUrls.map((w, i) => (
+                                    <span key={w.criterion}>{i > 0 && <span style={{ color:"#888" }}> / </span>}<a href={w.url} target="_blank" rel="noopener noreferrer" style={{ color:"#6CB4FF", textDecoration:"none" }} aria-label={`WCAG ${w.criterion} — ver normativa`}>{w.criterion} ↗</a></span>
+                                  ))}
+                                </span>
                               ) : (
                                 <span style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", color:"#6CB4FF" }}>{item.wcag}</span>
                               )

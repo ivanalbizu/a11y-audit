@@ -64,11 +64,12 @@ const SLUGS = {
   "4.1.3": "status-messages",
 };
 
-/** Returns the W3C Understanding page URL for a WCAG criterion, or null */
-export function getWcagUrl(criterion) {
+/** Returns array of { criterion, url } for all WCAG criteria in the string, or null if none */
+export function getWcagUrls(criterion) {
   if (!criterion || criterion === "—") return null;
-  // Handle composite criteria like "1.1.1 / 1.3.1" — link to the first one
-  const first = criterion.split("/")[0].trim();
-  const slug = SLUGS[first];
-  return slug ? `${BASE}${slug}` : null;
+  const parts = criterion.split("/").map(s => s.trim());
+  const results = parts
+    .map(c => ({ criterion: c, url: SLUGS[c] ? `${BASE}${SLUGS[c]}` : null }))
+    .filter(r => r.url);
+  return results.length ? results : null;
 }

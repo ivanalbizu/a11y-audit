@@ -38,6 +38,7 @@ const SLUGS = {
   "2.4.13": "focus-appearance",
   "2.5.1": "pointer-gestures",
   "2.5.2": "pointer-cancellation",
+  "2.5.3": "label-in-name",
   "2.5.4": "motion-actuation",
   "2.5.7": "dragging-movements",
   "2.5.5": "target-size-enhanced",

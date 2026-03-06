@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CHECKLIST } from "../data/checklist";
 import { css } from "../styles/theme";
+import { getStatus } from "../utils/checks";
 
 function formatDateRange(audit) {
   const start = audit.startDate ? new Date(audit.startDate).toLocaleDateString("es-ES") : null;
@@ -76,11 +77,11 @@ export default function Dashboard({ audits, onSelect, onCreate }) {
       ) : (
         <ul style={{ display:"grid", gap:"0.75rem", listStyle:"none", padding:0, margin:0 }}>
           {audits.map(audit => {
-            const checks = Object.values(audit.checks || {});
+            const auditChecks = audit.checks || {};
             const total = CHECKLIST.length;
-            const done = checks.filter(s => s !== "pending").length;
-            const fails = checks.filter(s => s === "fail").length;
-            const passes = checks.filter(s => s === "pass").length;
+            const done = CHECKLIST.filter(i => getStatus(auditChecks, i.id) !== "pending").length;
+            const fails = CHECKLIST.filter(i => getStatus(auditChecks, i.id) === "fail").length;
+            const passes = CHECKLIST.filter(i => getStatus(auditChecks, i.id) === "pass").length;
             const pct = Math.round((done / total) * 100);
             return (
               <li key={audit.id}>

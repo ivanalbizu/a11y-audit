@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CHECKLIST } from "../data/checklist";
-import { SEV_CONFIG, EFFORT_CONFIG, STATUS_CONFIG, TIPO_CONFIG, NIVEL_CONFIG, AREAS } from "../data/config";
+import { SEV_CONFIG, EFFORT_CONFIG, STATUS_CONFIG, TIPO_CONFIG, NIVEL_CONFIG, AREAS, DEFAULT_SCOPES, SCOPE_COLORS } from "../data/config";
 import { css } from "../styles/theme";
 import { Badge, TipoBadge, NivelBadge, StatusSelect } from "./StatusBadges";
 import SummaryView from "./SummaryView";
@@ -8,11 +8,12 @@ import { getWcagUrls } from "../data/wcagLinks";
 import VersionsView from "./VersionsView";
 import GlossaryView from "./GlossaryView";
 import { checkStorageCapacity, getStorageSizeMB, exportSingleAudit } from "../utils/storage";
+import { getStatus, getScope, setCheckStatus, setCheckScope, isInherited } from "../utils/checks";
 
 const EMPTY_CUSTOM_ITEM = { item:"", area:"Perceivable", cat:"", wcag:"—", nivel:"A", sev:"medium", tipo:"manual", effort:"medium", who:"", desc:"", fix:"", team:"" };
 
 // Extracted styles for elements rendered inside .map() loops (avoids re-creating objects per render)
-const GRID_COLS = "72px 68px 80px 1fr 42px 82px 24px 114px";
+const GRID_COLS = "72px 68px 80px 1fr 42px 82px 24px 114px 90px";
 const S = {
   hdr: { fontSize:"0.7rem", color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600, fontFamily:"'DM Mono',monospace" },
   headerRow: { display:"grid", gridTemplateColumns:GRID_COLS, gap:"0 0.75rem", alignItems:"center", padding:"0.5rem 1rem", position:"sticky", top:0, zIndex:10, background:"var(--bg-main)", borderBottom:"2px solid var(--border)", marginBottom:"4px" },
@@ -44,6 +45,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
   const [filterStatus, setFilterStatus] = useState("todas");
   const [filterTipo, setFilterTipo] = useState("todas");
   const [filterNivel, setFilterNivel] = useState("todas");
+  const [filterScope, setFilterScope] = useState("todas");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(null);
   const [view, setView] = useState("checklist");
@@ -57,7 +59,11 @@ export default function AuditView({ audit, onUpdate, onBack }) {
   const checks = audit.checks || {};
   const notes = audit.notes || {};
 
-  const setStatus = (id, status) => onUpdate({ ...audit, checks: { ...checks, [id]: status } });
+  const allScopes = [...DEFAULT_SCOPES, ...(audit.customScopes || [])];
+  const [newScopeName, setNewScopeName] = useState("");
+
+  const setStatus = (id, status) => onUpdate({ ...audit, checks: setCheckStatus(checks, id, status) });
+  const setScopeForItem = (id, scope) => onUpdate({ ...audit, checks: setCheckScope(checks, id, scope) });
   const setNote = (id, note) => onUpdate({ ...audit, notes: { ...notes, [id]: note } });
   const screenshots = audit.screenshots || {};
 
@@ -134,9 +140,14 @@ export default function AuditView({ audit, onUpdate, onBack }) {
   const filtered = allItems.filter(item => {
     if (filterArea !== "Todas" && item.area !== filterArea) return false;
     if (filterSev !== "todas" && item.sev !== filterSev) return false;
-    if (filterStatus !== "todas" && (checks[item.id] || "pending") !== filterStatus) return false;
+    if (filterStatus !== "todas" && (getStatus(checks, item.id)) !== filterStatus) return false;
     if (filterTipo !== "todas" && item.tipo !== filterTipo) return false;
     if (filterNivel !== "todas" && item.nivel !== filterNivel) return false;
+    if (filterScope !== "todas") {
+      const sc = getScope(checks, item.id);
+      if (filterScope === "sin-scope" && sc !== null) return false;
+      if (filterScope !== "sin-scope" && sc !== filterScope) return false;
+    }
     if (search && !item.item.toLowerCase().includes(search.toLowerCase()) && !item.id.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -145,15 +156,15 @@ export default function AuditView({ audit, onUpdate, onBack }) {
   const total = allItems.length;
   const statsByArea = AREAS.map(area => {
     const items = allItems.filter(i => i.area === area);
-    const fails = items.filter(i => (checks[i.id]||"pending") === "fail").length;
-    const passes = items.filter(i => (checks[i.id]||"pending") === "pass").length;
-    const pending = items.filter(i => (checks[i.id]||"pending") === "pending").length;
+    const fails = items.filter(i => getStatus(checks, i.id) === "fail").length;
+    const passes = items.filter(i => getStatus(checks, i.id) === "pass").length;
+    const pending = items.filter(i => getStatus(checks, i.id) === "pending").length;
     return { area, total:items.length, fails, passes, pending };
   });
-  const totalFails = allItems.filter(i => (checks[i.id]||"pending") === "fail").length;
-  const totalPasses = allItems.filter(i => (checks[i.id]||"pending") === "pass").length;
-  const totalDone = allItems.filter(i => (checks[i.id]||"pending") !== "pending").length;
-  const critFails = allItems.filter(i => i.sev === "critical" && (checks[i.id]||"pending") === "fail").length;
+  const totalFails = allItems.filter(i => getStatus(checks, i.id) === "fail").length;
+  const totalPasses = allItems.filter(i => getStatus(checks, i.id) === "pass").length;
+  const totalDone = allItems.filter(i => getStatus(checks, i.id) !== "pending").length;
+  const critFails = allItems.filter(i => i.sev === "critical" && getStatus(checks, i.id) === "fail").length;
 
 
   return (
@@ -227,6 +238,41 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               <option value="todas">Todos los niveles</option>
               {Object.entries(NIVEL_CONFIG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
+            <select style={css.select} value={filterScope} onChange={e => setFilterScope(e.target.value)} aria-label="Filtrar por scope">
+              <option value="todas">Todos los scopes</option>
+              <option value="sin-scope">Sin scope</option>
+              {allScopes.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <div style={{ display:"flex", gap:"0.25rem", alignItems:"center" }}>
+              <input
+                style={{ ...css.input, width:"100px", padding:"0.3rem 0.5rem", fontSize:"0.75rem" }}
+                placeholder="Nuevo scope..."
+                value={newScopeName}
+                onChange={e => setNewScopeName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && newScopeName.trim()) {
+                    const name = newScopeName.trim();
+                    if (!allScopes.includes(name)) {
+                      onUpdate({ ...audit, customScopes: [...(audit.customScopes || []), name] });
+                    }
+                    setNewScopeName("");
+                  }
+                }}
+                aria-label="Crear nuevo scope"
+              />
+              <button
+                style={{ ...css.btn("var(--accent)"), padding:"0.25rem 0.5rem", fontSize:"0.75rem" }}
+                onClick={() => {
+                  if (!newScopeName.trim()) return;
+                  const name = newScopeName.trim();
+                  if (!allScopes.includes(name)) {
+                    onUpdate({ ...audit, customScopes: [...(audit.customScopes || []), name] });
+                  }
+                  setNewScopeName("");
+                }}
+                aria-label="Añadir scope"
+              >+</button>
+            </div>
             <span style={{ fontSize:"0.8rem", color:"var(--text-secondary)", marginLeft:"auto" }} aria-live="polite">{filtered.length} ítems</span>
             <span style={{ borderLeft:"1px solid var(--border-hover)", height:"20px" }} aria-hidden="true"></span>
             <select
@@ -236,10 +282,18 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                 const val = e.target.value;
                 if (!val) return;
                 const ids = filtered.map(i => i.id);
-                if (!window.confirm(`¿Marcar ${ids.length} ítems como "${val}"?`)) { e.target.value = ""; return; }
-                const updatedChecks = { ...checks };
-                ids.forEach(id => { updatedChecks[id] = val; });
-                onUpdate({ ...audit, checks: updatedChecks });
+                if (val.startsWith("scope:")) {
+                  const scope = val.replace("scope:", "") || null;
+                  if (!window.confirm(`¿Asignar scope "${scope || "ninguno"}" a ${ids.length} ítems?`)) { e.target.value = ""; return; }
+                  let updatedChecks = { ...checks };
+                  ids.forEach(id => { updatedChecks = setCheckScope(updatedChecks, id, scope); });
+                  onUpdate({ ...audit, checks: updatedChecks });
+                } else {
+                  if (!window.confirm(`¿Marcar ${ids.length} ítems como "${val}"?`)) { e.target.value = ""; return; }
+                  let updatedChecks = { ...checks };
+                  ids.forEach(id => { updatedChecks = setCheckStatus(updatedChecks, id, val); });
+                  onUpdate({ ...audit, checks: updatedChecks });
+                }
                 e.target.value = "";
               }}
               aria-label="Acción masiva sobre ítems filtrados"
@@ -249,6 +303,9 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               <option value="fail">✗ Marcar fail</option>
               <option value="na">— Marcar N/A</option>
               <option value="pending">↺ Resetear a pendiente</option>
+              <option disabled>── Scope ──</option>
+              <option value="scope:">Quitar scope</option>
+              {allScopes.map(s => <option key={s} value={`scope:${s}`}>Scope: {s}</option>)}
             </select>
           </div>
 
@@ -343,12 +400,13 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                   <span role="columnheader" style={S.hdr}>WCAG</span>
                   <span role="columnheader" style={S.hdr} aria-hidden="true"></span>
                   <span role="columnheader" style={S.hdr}>Estado</span>
+                  <span role="columnheader" style={S.hdr}>Scope</span>
                 </div>
 
                 {/* Rows */}
                 <div style={{ display:"flex", flexDirection:"column", gap:"4px" }}>
                   {filtered.map(item => {
-                    const status = checks[item.id] || "pending";
+                    const status = getStatus(checks, item.id);
                     const isOpen = expanded === item.id;
                     const detailsId = `details-${item.id}`;
                     const wcagUrls = getWcagUrls(item.wcag);
@@ -360,6 +418,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                         >
                           <span role="cell" style={{ ...S.cellId, color: customIds.has(item.id) ? "var(--accent-purple)" : "var(--accent)" }}>
                             {customIds.has(item.id) ? "CUST" : item.id}
+                            {isInherited(checks, item.id) && <span title="Heredado de otra auditoría" style={{ fontSize:"0.6rem", opacity:0.7 }}>↩</span>}
                           </span>
                           <span role="cell"><Badge sev={item.sev} /></span>
                           <span role="cell"><TipoBadge tipo={item.tipo} /></span>
@@ -385,6 +444,17 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                           </button>
                           <span role="cell" onClick={e => e.stopPropagation()}>
                             <StatusSelect value={status} onChange={v => setStatus(item.id, v)} />
+                          </span>
+                          <span role="cell" onClick={e => e.stopPropagation()}>
+                            <select
+                              value={getScope(checks, item.id) || ""}
+                              onChange={e => setScopeForItem(item.id, e.target.value || null)}
+                              aria-label={`Scope de ${item.id}`}
+                              style={{ ...css.select, fontSize:"0.7rem", padding:"0.2rem 0.3rem", color: SCOPE_COLORS[getScope(checks, item.id)] || "var(--text-tertiary)" }}
+                            >
+                              <option value="">—</option>
+                              {allScopes.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
                           </span>
                         </div>
 

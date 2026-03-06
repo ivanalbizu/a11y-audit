@@ -1,3 +1,5 @@
+import { migrateAudit } from "./checks";
+
 const STORAGE_KEY = "a11y-audits";
 const WARN_THRESHOLD = 4 * 1024 * 1024;
 const MAX_THRESHOLD = 9 * 1024 * 1024;
@@ -27,7 +29,8 @@ export function saveAudits(audits) {
 export function loadAudits() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const audits = data ? JSON.parse(data) : [];
+    return audits.map(migrateAudit);
   } catch {
     return [];
   }

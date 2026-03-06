@@ -17,6 +17,12 @@ Aplicación web para gestionar auditorías de accesibilidad siguiendo el estánd
 - **Exportar / Importar JSON** — Respaldo global o por auditoría individual, con detección de duplicados al importar
 - **Sidebar** — Navegación rápida entre auditorías con indicador de progreso y fechas
 - **Notas y evidencias** — Textarea auto-creciente por ítem para documentar hallazgos
+- **Scopes** — Clasificar cada ítem del checklist por scope (Global, Header, Footer o personalizado)
+- **Herencia de checks** — Al crear auditoría de un dominio existente, importar checks compartidos (scoped)
+- **Operaciones masivas** — Marcar estado o asignar scope a todos los ítems filtrados
+- **Compresión de capturas** — Imágenes comprimidas automáticamente a WebP (max 1200px, calidad 0.7)
+- **Temas claro/oscuro** — Automático via `prefers-color-scheme`, con colores ajustados para contraste AA
+- **Error Boundary** — Fallback UI ante crashes de componentes con opción de reintentar o limpiar datos
 - **Control de almacenamiento** — Indicador de uso en MB, aviso al 4 MB, bloqueo al 9 MB
 - **Persistencia en localStorage** — Los datos se guardan automáticamente en el navegador
 
@@ -34,13 +40,54 @@ Aplicación web para gestionar auditorías de accesibilidad siguiendo el estánd
 
 Cada ítem incluye: severidad (crítico/alto/medio/bajo), tipo (automático/manual/híbrido), criterio WCAG asociado, nivel (A/AA/AAA), herramienta sugerida, equipo responsable, esfuerzo estimado y recomendación de corrección.
 
+## Scopes
+
+Los scopes permiten clasificar cada ítem del checklist según dónde aplica dentro del sitio web. Esto es especialmente útil cuando se auditan múltiples páginas del mismo dominio.
+
+### Scopes predefinidos
+
+| Scope | Uso típico |
+|-------|-----------|
+| **Global** | Tipografía, colores, idioma, skip links... aspectos transversales |
+| **Header** | Navegación principal, logo, orden de enlaces |
+| **Footer** | Enlaces del footer, landmarks, contraste |
+
+### Scopes personalizados
+
+El auditor puede crear scopes adicionales (ej: "Banner cookies", "Formulario contacto", "Sidebar") desde la barra de filtros del checklist, escribiendo el nombre y pulsando Enter o el botón +.
+
+### Herencia entre auditorías
+
+Al crear una nueva auditoría para un dominio que ya tiene auditorías previas:
+
+1. La app detecta los checks que tienen scope asignado
+2. Aparece un diálogo preguntando si quieres importar los checks compartidos
+3. Los checks importados se marcan como **heredados** (icono ↩ junto al ID)
+4. A partir de ahí son **independientes**: modificar un check en la nueva auditoría no afecta a la original
+5. Los scopes personalizados de auditorías previas también se importan
+
+### Modelo de datos
+
+```js
+// Cada check almacena status + scope
+checks: {
+  "PERC-01": { status: "pass", scope: "Global" },
+  "PERC-05": { status: "fail", scope: "Header" },
+  "PERC-10": { status: "pass", scope: null },     // sin scope = específico de página
+}
+```
+
+### Resumen por scope
+
+En la vista Resumen, la sección "Por scope" muestra el progreso (pass/fail/pendiente) desglosado por cada scope que tiene ítems asignados.
+
 ## Tech stack
 
 - **React 19** — Componentes funcionales con hooks
 - **Vite 7** — Bundler y servidor de desarrollo
 - **pnpm** — Gestor de paquetes
 
-Sin dependencias externas de UI. Estilos inline mediante un sistema de tema centralizado con paleta oscura y ratios de contraste verificados (WCAG AA).
+Sin dependencias externas de UI. Estilos inline mediante un sistema de tema centralizado. Temas claro/oscuro automáticos via `prefers-color-scheme` con ratios de contraste WCAG AA verificados.
 
 ## Estructura del proyecto
 
@@ -54,7 +101,8 @@ src/
 ├── styles/
 │   └── theme.js        # Sistema de estilos inline (paleta, tipografía, componentes)
 ├── utils/
-│   └── storage.js      # Persistencia localStorage, exportar/importar JSON, control de capacidad
+│   ├── storage.js      # Persistencia localStorage, exportar/importar JSON, control de capacidad
+│   └── checks.js       # Helpers del modelo de checks (status + scope, migración)
 ├── components/
 │   ├── Topbar.jsx      # Barra superior con exportar/importar/eliminar + indicador de almacenamiento
 │   ├── Sidebar.jsx     # Navegación lateral con lista de auditorías y fechas
@@ -63,7 +111,8 @@ src/
 │   ├── SummaryView.jsx # Resumen estadístico por área WCAG
 │   ├── VersionsView.jsx# Historial de versiones con snapshots y comparativa
 │   ├── GlossaryView.jsx# Glosario de acrónimos con búsqueda
-│   └── StatusBadges.jsx# Badges de severidad, tipo, nivel WCAG y selector de estado
+│   ├── StatusBadges.jsx# Badges de severidad, tipo, nivel WCAG y selector de estado
+│   └── ErrorBoundary.jsx # Fallback UI ante crashes de componentes
 ├── App.jsx             # Orquestador principal con hash routing
 ├── main.jsx            # Punto de entrada
 └── index.css           # Estilos globales y focus-visible

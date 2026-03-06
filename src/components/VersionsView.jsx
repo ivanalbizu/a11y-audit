@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CHECKLIST } from "../data/checklist";
 import { css } from "../styles/theme";
+import { getStatus } from "../utils/checks";
 
 function nextVersionId() {
   return `v-${crypto.randomUUID()}`;
@@ -15,8 +16,8 @@ export default function VersionsView({ audit, onUpdate, allItems }) {
   const handleCreate = () => {
     if (!window.confirm("¿Guardar una snapshot del estado actual como nueva versión?")) return;
     const checks = audit.checks || {};
-    const totalDone = itemList.filter(i => (checks[i.id] || "pending") !== "pending").length;
-    const totalPasses = itemList.filter(i => (checks[i.id] || "pending") === "pass").length;
+    const totalDone = itemList.filter(i => getStatus(checks, i.id) !== "pending").length;
+    const totalPasses = itemList.filter(i => getStatus(checks, i.id) === "pass").length;
     const conformity = totalDone > 0 ? Math.round((totalPasses / totalDone) * 100) : 0;
     const version = {
       versionId: nextVersionId(),
@@ -32,8 +33,8 @@ export default function VersionsView({ audit, onUpdate, allItems }) {
   const getComparison = (a, b) => {
     const changes = [];
     for (const item of itemList) {
-      const statusA = a.checks[item.id] || "pending";
-      const statusB = b.checks[item.id] || "pending";
+      const statusA = getStatus(a.checks, item.id);
+      const statusB = getStatus(b.checks, item.id);
       if (statusA !== statusB) {
         changes.push({ id: item.id, item: item.item, from: statusA, to: statusB });
       }
@@ -102,9 +103,9 @@ export default function VersionsView({ audit, onUpdate, allItems }) {
           <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"0.75rem", marginBottom:"1rem" }}>
             {(() => {
               const checks = selectedVersion.checks;
-              const done = itemList.filter(i => (checks[i.id] || "pending") !== "pending").length;
-              const fails = itemList.filter(i => (checks[i.id] || "pending") === "fail").length;
-              const passes = itemList.filter(i => (checks[i.id] || "pending") === "pass").length;
+              const done = itemList.filter(i => getStatus(checks, i.id) !== "pending").length;
+              const fails = itemList.filter(i => getStatus(checks, i.id) === "fail").length;
+              const passes = itemList.filter(i => getStatus(checks, i.id) === "pass").length;
               return [
                 { label:"Fallan", val:fails, color:"var(--danger)" },
                 { label:"Pasan", val:passes, color:"var(--success)" },

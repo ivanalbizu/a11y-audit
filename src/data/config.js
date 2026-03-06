@@ -37,6 +37,14 @@ export const STATUS_CONFIG = {
 
 export const AREAS = [...new Set(CHECKLIST.map(i => i.area))];
 
+export const DEFAULT_SCOPES = ["Global", "Header", "Footer"];
+
+export const SCOPE_COLORS = {
+  Global:  "var(--accent)",
+  Header:  "var(--accent-blue)",
+  Footer:  "var(--accent-purple)",
+};
+
 export const AREA_COLORS = {
   "Perceivable":   "var(--accent-blue)",
   "Operable":      "var(--accent)",

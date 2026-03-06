@@ -1,6 +1,7 @@
 import { CHECKLIST } from "../data/checklist";
-import { AREA_COLORS } from "../data/config";
+import { AREA_COLORS, DEFAULT_SCOPES, SCOPE_COLORS } from "../data/config";
 import { css } from "../styles/theme";
+import { getStatus, getScope } from "../utils/checks";
 
 export default function SummaryView({ audit, checks, statsByArea, totalFails, totalPasses, totalDone, critFails, total, allItems }) {
   const itemList = allItems || CHECKLIST;
@@ -58,12 +59,56 @@ export default function SummaryView({ audit, checks, statsByArea, totalFails, to
         </div>
       </div>
 
+      {/* By scope */}
+      {(() => {
+        const allScopes = [...DEFAULT_SCOPES, ...(audit.customScopes || [])];
+        const scopeStats = allScopes.map(scope => {
+          const items = itemList.filter(i => getScope(checks, i.id) === scope);
+          if (items.length === 0) return null;
+          const fails = items.filter(i => getStatus(checks, i.id) === "fail").length;
+          const passes = items.filter(i => getStatus(checks, i.id) === "pass").length;
+          const pending = items.filter(i => getStatus(checks, i.id) === "pending").length;
+          return { scope, total: items.length, fails, passes, pending };
+        }).filter(Boolean);
+        const unscopedItems = itemList.filter(i => getScope(checks, i.id) === null && getStatus(checks, i.id) !== "pending");
+        if (scopeStats.length === 0 && unscopedItems.length === 0) return null;
+        return (
+          <div style={{ ...css.card }}>
+            <h3 style={{ fontSize:"0.8rem", color:"var(--accent)", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:700, marginBottom:"1rem", margin:"0 0 1rem" }}>Por scope</h3>
+            <div style={{ display:"flex", flexDirection:"column", gap:"0.6rem" }}>
+              {scopeStats.map(s => {
+                const color = SCOPE_COLORS[s.scope] || "var(--text-secondary)";
+                const donePct = Math.round(((s.fails + s.passes) / s.total) * 100);
+                return (
+                  <div key={s.scope} style={{ display:"flex", alignItems:"center", gap:"0.75rem" }}>
+                    <div style={{ width:"100px", fontSize:"0.8rem", color, flexShrink:0, fontWeight:500 }}>{s.scope}</div>
+                    <div style={{ flex:1, background:"var(--bg-input)", borderRadius:"3px", height:"6px", overflow:"hidden" }} role="progressbar" aria-valuenow={donePct} aria-valuemin={0} aria-valuemax={100} aria-label={`${s.scope}: ${donePct}% revisado`}>
+                      <div style={{ height:"100%", width:`${donePct}%`, background:color, opacity:0.8, borderRadius:"3px" }} />
+                    </div>
+                    <div style={{ display:"flex", gap:"0.4rem", flexShrink:0 }}>
+                      <span style={css.tag("var(--danger)")}>{s.fails}✗</span>
+                      <span style={css.tag("var(--success)")}>{s.passes}✓</span>
+                      <span style={{ fontSize:"0.75rem", color:"var(--text-secondary)", fontFamily:"'DM Mono',monospace" }}>{s.pending}⊘</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {unscopedItems.length > 0 && (
+                <div style={{ fontSize:"0.8rem", color:"var(--text-tertiary)", marginTop:"0.25rem" }}>
+                  {unscopedItems.length} ítems revisados sin scope asignado
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Critical fails */}
       {critFails > 0 && (
         <div style={{ ...css.card, borderColor:"color-mix(in srgb, var(--danger) 25%, transparent)" }} role="alert">
           <h3 style={{ fontSize:"0.8rem", color:"var(--danger)", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:700, marginBottom:"1rem", margin:"0 0 1rem" }}>Ítems críticos con fallo</h3>
           <ul style={{ display:"flex", flexDirection:"column", gap:"0.4rem", listStyle:"none", padding:0, margin:0 }}>
-            {itemList.filter(i => i.sev === "critical" && (checks[i.id]||"pending") === "fail").map(item => (
+            {itemList.filter(i => i.sev === "critical" && getStatus(checks, i.id) === "fail").map(item => (
               <li key={item.id} style={{ display:"flex", alignItems:"center", gap:"0.6rem", padding:"0.55rem 0.8rem", background:"color-mix(in srgb, var(--danger) 8%, transparent)", border:"1px solid color-mix(in srgb, var(--danger) 20%, transparent)", borderRadius:"4px" }}>
                 <span style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", color:"var(--accent)" }}>{item.id}</span>
                 <span style={{ flex:1, fontSize:"0.875rem" }}>{item.item}</span>

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { saveAudits, loadAudits } from "./utils/storage";
 import { css } from "./styles/theme";
+import { getStatus, getScope } from "./utils/checks";
 import Topbar from "./components/Topbar";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
@@ -34,6 +35,39 @@ export default function App() {
   }, []);
 
   const createAudit = (domain, auditor, startDate, endDate) => {
+    // Check for same-domain audits with scoped checks
+    const normDomain = domain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    const sameDomain = audits.filter(a =>
+      a.domain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "") === normDomain
+    );
+
+    let inheritedChecks = {};
+    let inheritedScopes = [];
+    if (sameDomain.length > 0) {
+      // Gather scoped checks from all same-domain audits
+      const scopedEntries = [];
+      for (const a of sameDomain) {
+        for (const [id] of Object.entries(a.checks || {})) {
+          const scope = getScope(a.checks, id);
+          if (scope) {
+            scopedEntries.push({ id, status: getStatus(a.checks, id), scope, from: a.domain });
+          }
+        }
+      }
+      if (scopedEntries.length > 0) {
+        const scopes = [...new Set(scopedEntries.map(e => e.scope))];
+        const doImport = window.confirm(
+          `Hay ${scopedEntries.length} checks con scope (${scopes.join(", ")}) en auditorías previas de este dominio.\n\n¿Importar checks compartidos a la nueva auditoría?`
+        );
+        if (doImport) {
+          for (const e of scopedEntries) {
+            inheritedChecks[e.id] = { status: e.status, scope: e.scope, inherited: true };
+          }
+          inheritedScopes = [...new Set(sameDomain.flatMap(a => a.customScopes || []))];
+        }
+      }
+    }
+
     const audit = {
       id: Date.now().toString(),
       domain,
@@ -41,9 +75,10 @@ export default function App() {
       createdAt: new Date().toISOString(),
       startDate: startDate || null,
       endDate: endDate || null,
-      checks: {},
+      checks: inheritedChecks,
       notes: {},
       customItems: [],
+      customScopes: inheritedScopes,
       versions: [],
       screenshots: {},
     };

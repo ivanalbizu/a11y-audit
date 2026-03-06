@@ -1,5 +1,6 @@
 import { CHECKLIST } from "../data/checklist";
 import { css } from "../styles/theme";
+import { getStatus } from "../utils/checks";
 
 export default function Sidebar({ audits, activeAuditId, onSelectAudit }) {
   return (
@@ -13,7 +14,8 @@ export default function Sidebar({ audits, activeAuditId, onSelectAudit }) {
       </button>
       {audits.map(a => {
         const total = CHECKLIST.length;
-        const done = Object.values(a.checks || {}).filter(s => s !== "pending").length;
+        const chk = a.checks || {};
+        const done = CHECKLIST.filter(i => getStatus(chk, i.id) !== "pending").length;
         const pct = Math.round((done / total) * 100);
         const isActive = activeAuditId === a.id;
         const domain = a.domain.replace(/^https?:\/\//, "");

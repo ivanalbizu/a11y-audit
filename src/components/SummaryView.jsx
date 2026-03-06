@@ -30,7 +30,7 @@ export default function SummaryView({ audit, checks, statsByArea, totalFails, to
           <div style={{ background:"var(--bg-input)", borderRadius:"3px", height:"6px", overflow:"hidden" }} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Progreso de revisión: ${pct}%`}>
             <div style={{ height:"100%", width:`${pct}%`, background:"var(--accent)", borderRadius:"3px" }} />
           </div>
-          <div style={{ fontSize:"0.8rem", color:"var(--text-secondary)", marginTop:"0.3rem" }}>{pct}% revisado</div>
+          <div style={{ fontSize:"0.8rem", color:"var(--text-secondary)", marginTop:"0.3rem" }}>{totalDone}/{total} ({pct}%) analizados</div>
         </div>
       </div>
 

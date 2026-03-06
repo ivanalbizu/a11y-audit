@@ -166,9 +166,11 @@ export default function AuditView({ audit, onUpdate, onBack }) {
         <span style={{ fontSize:"0.8rem", color:"var(--text-secondary)" }}>· {audit.auditor}</span>
         <span aria-hidden="true" style={{ color:"var(--border-hover)" }}>·</span>
         <div style={{ display:"flex", alignItems:"center", gap:"0.3rem" }}>
-          <input type="date" value={audit.startDate || ""} onChange={e => onUpdate({ ...audit, startDate: e.target.value || null })} style={{ ...css.input, width:"130px", padding:"0.2rem 0.4rem", fontSize:"0.75rem" }} aria-label="Fecha de inicio" />
+          <label htmlFor="audit-start-date" style={{ fontSize:"0.7rem", color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Inicio</label>
+          <input id="audit-start-date" type="date" value={audit.startDate || ""} onChange={e => onUpdate({ ...audit, startDate: e.target.value || null })} style={{ ...css.input, width:"130px", padding:"0.2rem 0.4rem", fontSize:"0.75rem" }} />
           <span style={{ color:"var(--border-hover)", fontSize:"0.8rem" }}>→</span>
-          <input type="date" value={audit.endDate || ""} onChange={e => onUpdate({ ...audit, endDate: e.target.value || null })} style={{ ...css.input, width:"130px", padding:"0.2rem 0.4rem", fontSize:"0.75rem" }} aria-label="Fecha de fin" />
+          <label htmlFor="audit-end-date" style={{ fontSize:"0.7rem", color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Fin</label>
+          <input id="audit-end-date" type="date" value={audit.endDate || ""} onChange={e => onUpdate({ ...audit, endDate: e.target.value || null })} style={{ ...css.input, width:"130px", padding:"0.2rem 0.4rem", fontSize:"0.75rem" }} />
         </div>
         <button style={{ ...css.btn("var(--accent-blue)"), padding:"0.25rem 0.6rem", fontSize:"0.75rem" }} onClick={() => exportSingleAudit(audit)} aria-label="Exportar esta auditoría como JSON">↓ Exportar</button>
         <div style={{ marginLeft:"auto", display:"flex", gap:"0.5rem" }} role="tablist" aria-label="Vista de auditoría">

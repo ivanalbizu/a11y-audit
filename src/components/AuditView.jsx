@@ -11,6 +11,33 @@ import { checkStorageCapacity, getStorageSizeMB, exportSingleAudit } from "../ut
 
 const EMPTY_CUSTOM_ITEM = { item:"", area:"Perceivable", cat:"", wcag:"—", nivel:"A", sev:"medium", tipo:"manual", effort:"medium", who:"", desc:"", fix:"", team:"" };
 
+// Extracted styles for elements rendered inside .map() loops (avoids re-creating objects per render)
+const GRID_COLS = "72px 68px 80px 1fr 42px 82px 24px 114px";
+const S = {
+  hdr: { fontSize:"0.7rem", color:"#7A7A94", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600, fontFamily:"'DM Mono',monospace" },
+  headerRow: { display:"grid", gridTemplateColumns:GRID_COLS, gap:"0 0.75rem", alignItems:"center", padding:"0.5rem 1rem", position:"sticky", top:0, zIndex:10, background:"#0A0A12", borderBottom:"2px solid #2A2A3E", marginBottom:"4px" },
+  rowGrid: { display:"grid", gridTemplateColumns:GRID_COLS, gap:"0 0.75rem", alignItems:"center", padding:"0.65rem 1rem", cursor:"pointer" },
+  cellId: { fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", display:"flex", alignItems:"center", gap:"0.25rem" },
+  cellWcag: { fontFamily:"'DM Mono',monospace", fontSize:"0.75rem" },
+  wcagLink: { color:"#6CB4FF", textDecoration:"none" },
+  wcagText: { color:"#6CB4FF" },
+  wcagSep: { color:"#888" },
+  expandBtn: { background:"none", border:"none", cursor:"pointer", color:"#7A7A94", fontSize:"0.8rem", padding:0, display:"flex", alignItems:"center", justifyContent:"center" },
+  detailPanel: { borderTop:"1px solid #2A2A3E", padding:"1rem", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem" },
+  detailH4: { fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.4rem", margin:0, fontWeight:600 },
+  detailDesc: { fontSize:"0.875rem", lineHeight:1.7, color:"#D0D0E0", margin:"0.4rem 0 0" },
+  detailFix: { fontSize:"0.8rem", lineHeight:1.6, color:"#5ED67E", margin:"0.4rem 0 0", background:"#0A0A12", padding:"0.65rem 0.8rem", borderRadius:"4px", overflowX:"auto", whiteSpace:"pre-wrap", fontFamily:"'DM Mono',monospace" },
+  detailTool: { fontSize:"0.875rem", color:"#6CB4FF" },
+  detailWcagFallback: { fontSize:"0.875rem", color:"#A0A0B8" },
+  detailWcagLink: { color:"#6CB4FF", textDecoration:"underline" },
+  ssThumb: { width:"120px", height:"80px", objectFit:"cover", display:"block", cursor:"pointer" },
+  ssDeleteBtn: { position:"absolute", top:"2px", right:"2px", background:"rgba(10,10,18,0.85)", border:"1px solid #FF6B6B", color:"#FF6B6B", borderRadius:"50%", width:"20px", height:"20px", cursor:"pointer", fontSize:"0.7rem", display:"flex", alignItems:"center", justifyContent:"center", padding:0 },
+  ssContainer: { position:"relative", border:"1px solid #3A3A50", borderRadius:"4px", overflow:"hidden" },
+  statVal: { fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.6rem", lineHeight:1 },
+  statLabel: { fontSize:"0.75rem", color:"#A0A0B8", letterSpacing:"0.06em", marginTop:"0.3rem", textTransform:"uppercase" },
+  labelStyle: { fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 },
+};
+
 export default function AuditView({ audit, onUpdate, onBack }) {
   const [filterArea, setFilterArea] = useState("Todas");
   const [filterSev, setFilterSev] = useState("todas");
@@ -163,8 +190,8 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               { label:"Críticos con fallo", val:critFails, color:"#FF6B6B" },
             ].map(s => (
               <div key={s.label} style={{ ...css.card, padding:"0.9rem", textAlign:"center" }}>
-                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.6rem", color:s.color, lineHeight:1 }}>{s.val}</div>
-                <div style={{ fontSize:"0.75rem", color:"#A0A0B8", letterSpacing:"0.06em", marginTop:"0.3rem", textTransform:"uppercase" }}>{s.label}</div>
+                <div style={{ ...S.statVal, color:s.color }}>{s.val}</div>
+                <div style={S.statLabel}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -274,20 +301,18 @@ export default function AuditView({ audit, onUpdate, onBack }) {
 
           {/* Checklist table with aligned columns */}
           {(() => {
-            const gridCols = "72px 68px 80px 1fr 42px 82px 24px 114px";
-            const hdrStyle = { fontSize:"0.7rem", color:"#7A7A94", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600, fontFamily:"'DM Mono',monospace" };
             return (
               <div role="table" aria-label="Ítems del checklist">
                 {/* Sticky header */}
-                <div role="row" style={{ display:"grid", gridTemplateColumns:gridCols, gap:"0 0.75rem", alignItems:"center", padding:"0.5rem 1rem", position:"sticky", top:0, zIndex:10, background:"#0A0A12", borderBottom:"2px solid #2A2A3E", marginBottom:"4px" }}>
-                  <span role="columnheader" style={hdrStyle}>ID</span>
-                  <span role="columnheader" style={hdrStyle}>Sev.</span>
-                  <span role="columnheader" style={hdrStyle}>Tipo</span>
-                  <span role="columnheader" style={hdrStyle}>Descripción</span>
-                  <span role="columnheader" style={hdrStyle}>Nivel</span>
-                  <span role="columnheader" style={hdrStyle}>WCAG</span>
-                  <span role="columnheader" style={hdrStyle} aria-hidden="true"></span>
-                  <span role="columnheader" style={hdrStyle}>Estado</span>
+                <div role="row" style={S.headerRow}>
+                  <span role="columnheader" style={S.hdr}>ID</span>
+                  <span role="columnheader" style={S.hdr}>Sev.</span>
+                  <span role="columnheader" style={S.hdr}>Tipo</span>
+                  <span role="columnheader" style={S.hdr}>Descripción</span>
+                  <span role="columnheader" style={S.hdr}>Nivel</span>
+                  <span role="columnheader" style={S.hdr}>WCAG</span>
+                  <span role="columnheader" style={S.hdr} aria-hidden="true"></span>
+                  <span role="columnheader" style={S.hdr}>Estado</span>
                 </div>
 
                 {/* Rows */}
@@ -300,22 +325,22 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                     return (
                       <div key={item.id} role="row" style={{ background:"#10101C", border:`1px solid ${isOpen ? "#3A3A50" : "#2A2A3E"}`, borderRadius:"6px", overflow:"hidden", transition:"border-color 0.15s" }}>
                         <div
-                          style={{ display:"grid", gridTemplateColumns:gridCols, gap:"0 0.75rem", alignItems:"center", padding:"0.65rem 1rem", cursor:"pointer" }}
+                          style={S.rowGrid}
                           onClick={() => setExpanded(isOpen ? null : item.id)}
                         >
-                          <span role="cell" style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", color: customIds.has(item.id) ? "#C88AFF" : "#E8FF47", display:"flex", alignItems:"center", gap:"0.25rem" }}>
+                          <span role="cell" style={{ ...S.cellId, color: customIds.has(item.id) ? "#C88AFF" : "#E8FF47" }}>
                             {customIds.has(item.id) ? "CUST" : item.id}
                           </span>
                           <span role="cell"><Badge sev={item.sev} /></span>
                           <span role="cell"><TipoBadge tipo={item.tipo} /></span>
                           <span role="cell" style={{ fontSize:"0.875rem", color: status==="fail"?"#FF6B6B": status==="pass"?"#5ED67E":"#E8E8F0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", minWidth:0 }}>{item.item}</span>
                           <span role="cell"><NivelBadge nivel={item.nivel} /></span>
-                          <span role="cell" style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem" }} onClick={e => e.stopPropagation()}>
+                          <span role="cell" style={S.cellWcag} onClick={e => e.stopPropagation()}>
                             {item.wcag !== "—" && (
                               wcagUrls ? wcagUrls.map((w, i) => (
-                                <span key={w.criterion}>{i > 0 && <span style={{ color:"#888" }}> / </span>}<a href={w.url} target="_blank" rel="noopener noreferrer" style={{ color:"#6CB4FF", textDecoration:"none" }} aria-label={`WCAG ${w.criterion} — ver normativa`}>{w.criterion}&thinsp;↗</a></span>
+                                <span key={w.criterion}>{i > 0 && <span style={S.wcagSep}> / </span>}<a href={w.url} target="_blank" rel="noopener noreferrer" style={S.wcagLink} aria-label={`WCAG ${w.criterion} — ver normativa`}>{w.criterion}&thinsp;↗</a></span>
                               )) : (
-                                <span style={{ color:"#6CB4FF" }}>{item.wcag}</span>
+                                <span style={S.wcagText}>{item.wcag}</span>
                               )
                             )}
                           </span>
@@ -324,7 +349,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                             aria-controls={detailsId}
                             aria-label={`${item.id}: ${item.item}`}
                             onClick={e => { e.stopPropagation(); setExpanded(isOpen ? null : item.id); }}
-                            style={{ background:"none", border:"none", cursor:"pointer", color:"#7A7A94", fontSize:"0.8rem", padding:0, display:"flex", alignItems:"center", justifyContent:"center" }}
+                            style={S.expandBtn}
                           >
                             {isOpen ? "▲" : "▼"}
                           </button>
@@ -334,33 +359,33 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                         </div>
 
                         {isOpen && (
-                          <div id={detailsId} style={{ borderTop:"1px solid #2A2A3E", padding:"1rem", display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem" }}>
+                          <div id={detailsId} style={S.detailPanel}>
                             <div>
-                              <h4 style={{ fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.4rem", margin:0, fontWeight:600 }}>Descripción / Cómo revisar</h4>
-                              <p style={{ fontSize:"0.875rem", lineHeight:1.7, color:"#D0D0E0", margin:"0.4rem 0 0" }}>{item.desc}</p>
+                              <h4 style={S.detailH4}>Descripción / Cómo revisar</h4>
+                              <p style={S.detailDesc}>{item.desc}</p>
                             </div>
                             <div>
-                              <h4 style={{ fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.4rem", margin:0, fontWeight:600 }}>Recomendación / Fix</h4>
-                              <pre style={{ fontSize:"0.8rem", lineHeight:1.6, color:"#5ED67E", margin:"0.4rem 0 0", background:"#0A0A12", padding:"0.65rem 0.8rem", borderRadius:"4px", overflowX:"auto", whiteSpace:"pre-wrap", fontFamily:"'DM Mono',monospace" }}>{item.fix}</pre>
+                              <h4 style={S.detailH4}>Recomendación / Fix</h4>
+                              <pre style={S.detailFix}>{item.fix}</pre>
                             </div>
                             <div>
-                              <h4 style={{ fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.4rem", margin:0, fontWeight:600 }}>Criterio WCAG</h4>
+                              <h4 style={S.detailH4}>Criterio WCAG</h4>
                               {wcagUrls ? (
                                 <span style={{ fontSize:"0.875rem" }}>
                                   {wcagUrls.map((w, i) => (
-                                    <span key={w.criterion}>{i > 0 && <span style={{ color:"#888" }}> · </span>}<a href={w.url} target="_blank" rel="noopener noreferrer" style={{ color:"#6CB4FF", textDecoration:"underline" }}>WCAG {w.criterion} ({item.nivel}) — Understanding ↗</a></span>
+                                    <span key={w.criterion}>{i > 0 && <span style={S.wcagSep}> · </span>}<a href={w.url} target="_blank" rel="noopener noreferrer" style={S.detailWcagLink}>WCAG {w.criterion} ({item.nivel}) — Understanding ↗</a></span>
                                   ))}
                                 </span>
                               ) : (
-                                <span style={{ fontSize:"0.875rem", color:"#A0A0B8" }}>{item.wcag}</span>
+                                <span style={S.detailWcagFallback}>{item.wcag}</span>
                               )}
                             </div>
                             <div>
-                              <h4 style={{ fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.4rem", margin:0, fontWeight:600 }}>Herramienta sugerida</h4>
-                              <span style={{ fontSize:"0.875rem", color:"#6CB4FF" }}>{item.tool}</span>
+                              <h4 style={S.detailH4}>Herramienta sugerida</h4>
+                              <span style={S.detailTool}>{item.tool}</span>
                             </div>
                             <div>
-                              <h4 style={{ fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.4rem", margin:0, fontWeight:600 }}>Equipo · Esfuerzo · Afecta a</h4>
+                              <h4 style={S.detailH4}>Equipo · Esfuerzo · Afecta a</h4>
                               <div style={{ display:"flex", gap:"0.4rem", flexWrap:"wrap", marginTop:"0.4rem" }}>
                                 <span style={css.tag("#C88AFF")}>{item.team}</span>
                                 <span style={css.tag(EFFORT_CONFIG[item.effort]?.color || "#A0A0B8")}>{EFFORT_CONFIG[item.effort]?.label}</span>
@@ -374,7 +399,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                             )}
                             <div style={{ gridColumn:"1/-1" }}>
                               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"0.4rem" }}>
-                                <label htmlFor={`notes-${item.id}`} style={{ fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 }}>Notas / Evidencia</label>
+                                <label htmlFor={`notes-${item.id}`} style={S.labelStyle}>Notas / Evidencia</label>
                                 <label htmlFor={`file-${item.id}`} style={{ ...css.btn("#6CB4FF"), cursor:"pointer", display:"inline-flex", alignItems:"center", gap:"0.3rem", padding:"0.25rem 0.6rem", fontSize:"0.75rem" }}>
                                   Adjuntar captura
                                   <input id={`file-${item.id}`} type="file" accept="image/*" aria-label={`Adjuntar captura para ${item.id}`} style={{ position:"absolute", width:"1px", height:"1px", overflow:"hidden", clip:"rect(0,0,0,0)" }}
@@ -394,13 +419,13 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                               {(screenshots[item.id] || []).length > 0 && (
                                 <div style={{ display:"flex", gap:"0.5rem", flexWrap:"wrap", marginTop:"0.5rem" }}>
                                   {screenshots[item.id].map(ss => (
-                                    <div key={ss.id} style={{ position:"relative", border:"1px solid #3A3A50", borderRadius:"4px", overflow:"hidden" }}>
-                                      <img src={ss.data} alt={ss.name} style={{ width:"120px", height:"80px", objectFit:"cover", display:"block", cursor:"pointer" }}
+                                    <div key={ss.id} style={S.ssContainer}>
+                                      <img src={ss.data} alt={ss.name} style={S.ssThumb}
                                         onClick={() => window.open(ss.data, "_blank")}
                                       />
                                       <button
                                         onClick={() => deleteScreenshot(item.id, ss.id)}
-                                        style={{ position:"absolute", top:"2px", right:"2px", background:"rgba(10,10,18,0.85)", border:"1px solid #FF6B6B", color:"#FF6B6B", borderRadius:"50%", width:"20px", height:"20px", cursor:"pointer", fontSize:"0.7rem", display:"flex", alignItems:"center", justifyContent:"center", padding:0 }}
+                                        style={S.ssDeleteBtn}
                                         aria-label={`Eliminar captura ${ss.name}`}
                                       >
                                         ✕

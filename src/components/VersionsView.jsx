@@ -46,7 +46,7 @@ export default function VersionsView({ audit, onUpdate, allItems }) {
     ? getComparison(versions[compareIdx], versions[selectedIdx])
     : null;
 
-  const headingStyle = { fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.5rem", fontWeight:600 };
+  const headingStyle = { fontSize:"0.75rem", color:"var(--text-label)", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.5rem", fontWeight:600 };
 
   return (
     <div>
@@ -56,9 +56,9 @@ export default function VersionsView({ audit, onUpdate, allItems }) {
       </div>
 
       {versions.length === 0 ? (
-        <div style={{ textAlign:"center", padding:"3rem 2rem", color:"#A0A0B8", border:"1px dashed #2A2A3E", borderRadius:"8px" }}>
+        <div style={{ textAlign:"center", padding:"3rem 2rem", color:"var(--text-secondary)", border:"1px dashed var(--border)", borderRadius:"8px" }}>
           <div style={{ fontSize:"1.5rem", marginBottom:"0.75rem" }} aria-hidden="true">📸</div>
-          <div style={{ fontSize:"0.9rem", color:"#C0C0D0", marginBottom:"0.4rem" }}>Sin versiones guardadas</div>
+          <div style={{ fontSize:"0.9rem", color:"var(--text-label)", marginBottom:"0.4rem" }}>Sin versiones guardadas</div>
           <div style={{ fontSize:"0.8rem" }}>Crea una versión para guardar el estado actual del checklist</div>
         </div>
       ) : (
@@ -67,23 +67,23 @@ export default function VersionsView({ audit, onUpdate, allItems }) {
             const isSelected = selectedIdx === idx;
             const isCompare = compareIdx === idx;
             return (
-              <div key={v.versionId} style={{ ...css.card, padding:"0.75rem 1rem", borderColor: isSelected ? "#E8FF47" : isCompare ? "#6CB4FF" : "#2A2A3E", cursor:"pointer", display:"flex", alignItems:"center", gap:"1rem" }}
+              <div key={v.versionId} style={{ ...css.card, padding:"0.75rem 1rem", borderColor: isSelected ? "var(--accent)" : isCompare ? "var(--accent-blue)" : "var(--border)", cursor:"pointer", display:"flex", alignItems:"center", gap:"1rem" }}
                 onClick={() => setSelectedIdx(isSelected ? null : idx)}
               >
-                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:"1rem", color: isSelected ? "#E8FF47" : "#E8E8F0", minWidth:"36px" }}>
+                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:"1rem", color: isSelected ? "var(--accent)" : "var(--text-primary)", minWidth:"36px" }}>
                   {v.label}
                 </div>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:"0.8rem", color:"#A0A0B8" }}>
+                  <div style={{ fontSize:"0.8rem", color:"var(--text-secondary)" }}>
                     {new Date(v.snapshotDate).toLocaleDateString("es-ES", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" })}
                   </div>
                 </div>
-                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.2rem", color: v.conformity < 40 ? "#FF6B6B" : v.conformity < 70 ? "#FFE066" : "#5ED67E" }}>
+                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.2rem", color: v.conformity < 40 ? "var(--danger)" : v.conformity < 70 ? "var(--warning)" : "var(--success)" }}>
                   {v.conformity}%
                 </div>
                 {selectedIdx !== null && selectedIdx !== idx && (
                   <button
-                    style={css.btn(isCompare ? "#6CB4FF" : "#7A7A94")}
+                    style={css.btn(isCompare ? "var(--accent-blue)" : "var(--text-tertiary)")}
                     onClick={e => { e.stopPropagation(); setCompareIdx(isCompare ? null : idx); }}
                   >
                     {isCompare ? "✓ Comparar" : "Comparar"}
@@ -106,14 +106,14 @@ export default function VersionsView({ audit, onUpdate, allItems }) {
               const fails = itemList.filter(i => (checks[i.id] || "pending") === "fail").length;
               const passes = itemList.filter(i => (checks[i.id] || "pending") === "pass").length;
               return [
-                { label:"Fallan", val:fails, color:"#FF6B6B" },
-                { label:"Pasan", val:passes, color:"#5ED67E" },
-                { label:"Pendientes", val:itemList.length - done, color:"#A0A0B8" },
-                { label:"Conformidad", val:`${selectedVersion.conformity}%`, color: selectedVersion.conformity < 40 ? "#FF6B6B" : selectedVersion.conformity < 70 ? "#FFE066" : "#5ED67E" },
+                { label:"Fallan", val:fails, color:"var(--danger)" },
+                { label:"Pasan", val:passes, color:"var(--success)" },
+                { label:"Pendientes", val:itemList.length - done, color:"var(--text-secondary)" },
+                { label:"Conformidad", val:`${selectedVersion.conformity}%`, color: selectedVersion.conformity < 40 ? "var(--danger)" : selectedVersion.conformity < 70 ? "var(--warning)" : "var(--success)" },
               ].map(s => (
                 <div key={s.label} style={{ textAlign:"center", padding:"0.5rem" }}>
                   <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.3rem", color:s.color, lineHeight:1 }}>{s.val}</div>
-                  <div style={{ fontSize:"0.75rem", color:"#A0A0B8", marginTop:"0.2rem", textTransform:"uppercase" }}>{s.label}</div>
+                  <div style={{ fontSize:"0.75rem", color:"var(--text-secondary)", marginTop:"0.2rem", textTransform:"uppercase" }}>{s.label}</div>
                 </div>
               ));
             })()}
@@ -128,16 +128,16 @@ export default function VersionsView({ audit, onUpdate, allItems }) {
             Comparando {versions[compareIdx].label} → {versions[selectedIdx].label} · {comparison.length} cambios
           </div>
           {comparison.length === 0 ? (
-            <div style={{ fontSize:"0.875rem", color:"#A0A0B8" }}>Sin cambios entre estas versiones</div>
+            <div style={{ fontSize:"0.875rem", color:"var(--text-secondary)" }}>Sin cambios entre estas versiones</div>
           ) : (
             <div style={{ display:"flex", flexDirection:"column", gap:"0.25rem", maxHeight:"300px", overflowY:"auto" }}>
               {comparison.map(c => (
-                <div key={c.id} style={{ display:"flex", alignItems:"center", gap:"0.75rem", padding:"0.4rem 0.5rem", background:"#0A0A12", borderRadius:"4px", fontSize:"0.8rem" }}>
-                  <span style={{ fontFamily:"'DM Mono',monospace", color:"#E8FF47", width:"68px", flexShrink:0 }}>{c.id}</span>
-                  <span style={{ flex:1, color:"#D0D0E0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{c.item}</span>
-                  <span style={{ color: c.from === "fail" ? "#FF6B6B" : c.from === "pass" ? "#5ED67E" : "#A0A0B8", fontFamily:"'DM Mono',monospace" }}>{c.from}</span>
-                  <span style={{ color:"#3A3A50" }}>→</span>
-                  <span style={{ color: c.to === "fail" ? "#FF6B6B" : c.to === "pass" ? "#5ED67E" : "#A0A0B8", fontFamily:"'DM Mono',monospace" }}>{c.to}</span>
+                <div key={c.id} style={{ display:"flex", alignItems:"center", gap:"0.75rem", padding:"0.4rem 0.5rem", background:"var(--bg-main)", borderRadius:"4px", fontSize:"0.8rem" }}>
+                  <span style={{ fontFamily:"'DM Mono',monospace", color:"var(--accent)", width:"68px", flexShrink:0 }}>{c.id}</span>
+                  <span style={{ flex:1, color:"var(--text-primary)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{c.item}</span>
+                  <span style={{ color: c.from === "fail" ? "var(--danger)" : c.from === "pass" ? "var(--success)" : "var(--text-secondary)", fontFamily:"'DM Mono',monospace" }}>{c.from}</span>
+                  <span style={{ color:"var(--border-hover)" }}>→</span>
+                  <span style={{ color: c.to === "fail" ? "var(--danger)" : c.to === "pass" ? "var(--success)" : "var(--text-secondary)", fontFamily:"'DM Mono',monospace" }}>{c.to}</span>
                 </div>
               ))}
             </div>

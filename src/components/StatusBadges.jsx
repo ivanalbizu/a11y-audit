@@ -23,7 +23,7 @@ export function StatusSelect({ value, onChange }) {
       value={value}
       onChange={e => onChange(e.target.value)}
       aria-label="Estado del ítem"
-      style={{ ...css.select, color: STATUS_CONFIG[value]?.color || "#E8E8F0", fontWeight:600 }}
+      style={{ ...css.select, color: STATUS_CONFIG[value]?.color || "var(--text-primary)", fontWeight:600 }}
     >
       {Object.entries(STATUS_CONFIG).map(([k, v]) => (
         <option key={k} value={k}>{v.icon} {v.label}</option>

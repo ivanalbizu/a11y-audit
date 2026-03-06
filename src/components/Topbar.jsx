@@ -17,10 +17,10 @@ export default function Topbar({ audits, activeAuditId, onImport, onDelete }) {
         <button style={topBtn("#6CB4FF")} onClick={() => exportAudits(audits)} aria-label="Exportar auditorías como JSON">
           ↓ Exportar JSON
         </button>
-        <label style={{ ...topBtn("#C88AFF"), cursor:"pointer" }} role="button" tabIndex={0} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") e.currentTarget.querySelector("input").click(); }}>
+        <button style={topBtn("#C88AFF")} onClick={() => document.getElementById("import-json-input").click()} aria-label="Importar auditorías desde archivo JSON">
           ↑ Importar JSON
-          <input type="file" accept=".json" style={{ position:"absolute", width:"1px", height:"1px", overflow:"hidden", clip:"rect(0,0,0,0)" }} onChange={e => { if(e.target.files[0]) importAudits(e.target.files[0], onImport); e.target.value=""; }} aria-label="Seleccionar archivo JSON para importar" />
-        </label>
+        </button>
+        <input id="import-json-input" type="file" accept=".json" style={{ position:"absolute", width:"1px", height:"1px", overflow:"hidden", clip:"rect(0,0,0,0)" }} onChange={e => { if(e.target.files[0]) importAudits(e.target.files[0], onImport); e.target.value=""; }} aria-label="Seleccionar archivo JSON para importar" />
         {activeAuditId && (
           <button style={topBtn("#FF6B6B")} onClick={() => { if (window.confirm("¿Eliminar esta auditoría? Esta acción no se puede deshacer.")) onDelete(activeAuditId); }} aria-label="Eliminar auditoría actual">
             Eliminar

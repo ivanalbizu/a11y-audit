@@ -139,21 +139,21 @@ export default function AuditView({ audit, onUpdate, onBack }) {
         </div>
         <button style={{ ...css.btn("#6CB4FF"), padding:"0.25rem 0.6rem", fontSize:"0.75rem" }} onClick={() => exportSingleAudit(audit)} aria-label="Exportar esta auditoría como JSON">↓ Exportar</button>
         <div style={{ marginLeft:"auto", display:"flex", gap:"0.5rem" }} role="tablist" aria-label="Vista de auditoría">
-          <button role="tab" aria-selected={view==="checklist"} style={{ ...css.btn(view==="checklist"?"#E8FF47":"#7A7A94") }} onClick={() => setView("checklist")}>Checklist</button>
-          <button role="tab" aria-selected={view==="summary"} style={{ ...css.btn(view==="summary"?"#E8FF47":"#7A7A94") }} onClick={() => setView("summary")}>Resumen</button>
-          <button role="tab" aria-selected={view==="versions"} style={{ ...css.btn(view==="versions"?"#E8FF47":"#7A7A94") }} onClick={() => setView("versions")}>Versiones{(audit.versions || []).length > 0 ? ` (${(audit.versions || []).length})` : ""}</button>
-          <button role="tab" aria-selected={view==="glossary"} style={{ ...css.btn(view==="glossary"?"#E8FF47":"#7A7A94") }} onClick={() => setView("glossary")}>Glosario</button>
+          <button role="tab" id="tab-checklist" aria-selected={view==="checklist"} aria-controls="panel-checklist" style={{ ...css.btn(view==="checklist"?"#E8FF47":"#7A7A94") }} onClick={() => setView("checklist")}>Checklist</button>
+          <button role="tab" id="tab-summary" aria-selected={view==="summary"} aria-controls="panel-summary" style={{ ...css.btn(view==="summary"?"#E8FF47":"#7A7A94") }} onClick={() => setView("summary")}>Resumen</button>
+          <button role="tab" id="tab-versions" aria-selected={view==="versions"} aria-controls="panel-versions" style={{ ...css.btn(view==="versions"?"#E8FF47":"#7A7A94") }} onClick={() => setView("versions")}>Versiones{(audit.versions || []).length > 0 ? ` (${(audit.versions || []).length})` : ""}</button>
+          <button role="tab" id="tab-glossary" aria-selected={view==="glossary"} aria-controls="panel-glossary" style={{ ...css.btn(view==="glossary"?"#E8FF47":"#7A7A94") }} onClick={() => setView("glossary")}>Glosario</button>
         </div>
       </nav>
 
       {view === "glossary" ? (
-        <GlossaryView />
+        <div role="tabpanel" id="panel-glossary" aria-labelledby="tab-glossary"><GlossaryView /></div>
       ) : view === "versions" ? (
-        <VersionsView audit={audit} onUpdate={onUpdate} allItems={allItems} />
+        <div role="tabpanel" id="panel-versions" aria-labelledby="tab-versions"><VersionsView audit={audit} onUpdate={onUpdate} allItems={allItems} /></div>
       ) : view === "summary" ? (
-        <SummaryView audit={audit} checks={checks} statsByArea={statsByArea} totalFails={totalFails} totalPasses={totalPasses} totalDone={totalDone} critFails={critFails} total={total} allItems={allItems} />
+        <div role="tabpanel" id="panel-summary" aria-labelledby="tab-summary"><SummaryView audit={audit} checks={checks} statsByArea={statsByArea} totalFails={totalFails} totalPasses={totalPasses} totalDone={totalDone} critFails={critFails} total={total} allItems={allItems} /></div>
       ) : (
-        <>
+        <div role="tabpanel" id="panel-checklist" aria-labelledby="tab-checklist">
           {/* Quick stats bar */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"0.75rem", marginBottom:"1.25rem" }} role="group" aria-label="Resumen rápido">
             {[
@@ -375,9 +375,9 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                             <div style={{ gridColumn:"1/-1" }}>
                               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"0.4rem" }}>
                                 <label htmlFor={`notes-${item.id}`} style={{ fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 }}>Notas / Evidencia</label>
-                                <label style={{ ...css.btn("#6CB4FF"), cursor:"pointer", display:"inline-flex", alignItems:"center", gap:"0.3rem", padding:"0.25rem 0.6rem", fontSize:"0.75rem" }}>
+                                <label htmlFor={`file-${item.id}`} style={{ ...css.btn("#6CB4FF"), cursor:"pointer", display:"inline-flex", alignItems:"center", gap:"0.3rem", padding:"0.25rem 0.6rem", fontSize:"0.75rem" }}>
                                   Adjuntar captura
-                                  <input type="file" accept="image/*" style={{ position:"absolute", width:"1px", height:"1px", overflow:"hidden", clip:"rect(0,0,0,0)" }}
+                                  <input id={`file-${item.id}`} type="file" accept="image/*" aria-label={`Adjuntar captura para ${item.id}`} style={{ position:"absolute", width:"1px", height:"1px", overflow:"hidden", clip:"rect(0,0,0,0)" }}
                                     onChange={e => { handleFileUpload(item.id, e.target.files[0]); e.target.value = ""; }}
                                   />
                                 </label>
@@ -419,7 +419,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               </div>
             );
           })()}
-        </>
+        </div>
       )}
     </section>
   );

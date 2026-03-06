@@ -42,6 +42,9 @@ export default function App() {
       endDate: endDate || null,
       checks: {},
       notes: {},
+      customItems: [],
+      versions: [],
+      screenshots: {},
     };
     const updated = [...audits, audit];
     persist(updated);

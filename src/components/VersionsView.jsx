@@ -2,10 +2,8 @@ import { useState } from "react";
 import { CHECKLIST } from "../data/checklist";
 import { css } from "../styles/theme";
 
-let versionCounter = 0;
 function nextVersionId() {
-  versionCounter += 1;
-  return `v-${versionCounter}-${Math.random().toString(36).slice(2, 8)}`;
+  return `v-${crypto.randomUUID()}`;
 }
 
 export default function VersionsView({ audit, onUpdate, allItems }) {

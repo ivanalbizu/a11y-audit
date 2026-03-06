@@ -80,7 +80,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
 
   const addCustomItem = () => {
     if (!newItem.item.trim()) { alert("La descripción es obligatoria."); return; }
-    const item = { ...newItem, id: `CUST-${Date.now()}`, item: newItem.item.trim() };
+    const item = { ...newItem, id: `CUST-${crypto.randomUUID()}`, item: newItem.item.trim() };
     onUpdate({ ...audit, customItems: [...customItems, item] });
     setNewItem(EMPTY_CUSTOM_ITEM);
     setShowAddForm(false);

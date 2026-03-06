@@ -310,16 +310,12 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                           <span role="cell"><TipoBadge tipo={item.tipo} /></span>
                           <span role="cell" style={{ fontSize:"0.875rem", color: status==="fail"?"#FF6B6B": status==="pass"?"#5ED67E":"#E8E8F0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", minWidth:0 }}>{item.item}</span>
                           <span role="cell"><NivelBadge nivel={item.nivel} /></span>
-                          <span role="cell" onClick={e => e.stopPropagation()}>
+                          <span role="cell" style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem" }} onClick={e => e.stopPropagation()}>
                             {item.wcag !== "—" && (
-                              wcagUrls ? (
-                                <span style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", display:"flex", gap:"0.35rem", flexWrap:"wrap" }}>
-                                  {wcagUrls.map((w, i) => (
-                                    <span key={w.criterion}>{i > 0 && <span style={{ color:"#888" }}> / </span>}<a href={w.url} target="_blank" rel="noopener noreferrer" style={{ color:"#6CB4FF", textDecoration:"none" }} aria-label={`WCAG ${w.criterion} — ver normativa`}>{w.criterion} ↗</a></span>
-                                  ))}
-                                </span>
-                              ) : (
-                                <span style={{ fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", color:"#6CB4FF" }}>{item.wcag}</span>
+                              wcagUrls ? wcagUrls.map((w, i) => (
+                                <span key={w.criterion}>{i > 0 && <span style={{ color:"#888" }}> / </span>}<a href={w.url} target="_blank" rel="noopener noreferrer" style={{ color:"#6CB4FF", textDecoration:"none" }} aria-label={`WCAG ${w.criterion} — ver normativa`}>{w.criterion}&thinsp;↗</a></span>
+                              )) : (
+                                <span style={{ color:"#6CB4FF" }}>{item.wcag}</span>
                               )
                             )}
                           </span>
@@ -349,8 +345,12 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                             </div>
                             <div>
                               <h4 style={{ fontSize:"0.75rem", color:"#C0C0D0", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:"0.4rem", margin:0, fontWeight:600 }}>Criterio WCAG</h4>
-                              {wcagUrl ? (
-                                <a href={wcagUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize:"0.875rem", color:"#6CB4FF", textDecoration:"underline" }}>WCAG {item.wcag} ({item.nivel}) — Understanding ↗</a>
+                              {wcagUrls ? (
+                                <span style={{ fontSize:"0.875rem" }}>
+                                  {wcagUrls.map((w, i) => (
+                                    <span key={w.criterion}>{i > 0 && <span style={{ color:"#888" }}> · </span>}<a href={w.url} target="_blank" rel="noopener noreferrer" style={{ color:"#6CB4FF", textDecoration:"underline" }}>WCAG {w.criterion} ({item.nivel}) — Understanding ↗</a></span>
+                                  ))}
+                                </span>
                               ) : (
                                 <span style={{ fontSize:"0.875rem", color:"#A0A0B8" }}>{item.wcag}</span>
                               )}

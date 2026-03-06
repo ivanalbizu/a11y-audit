@@ -60,7 +60,37 @@ export default function AuditView({ audit, onUpdate, onBack }) {
   const notes = audit.notes || {};
 
   const allScopes = [...DEFAULT_SCOPES, ...(audit.customScopes || [])];
+  const allScopesLower = allScopes.map(s => s.toLowerCase());
   const [newScopeName, setNewScopeName] = useState("");
+
+  const addScope = (raw) => {
+    const trimmed = raw.trim();
+    if (!trimmed) return;
+    const name = trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    if (!allScopesLower.includes(name.toLowerCase())) {
+      onUpdate({ ...audit, customScopes: [...(audit.customScopes || []), name] });
+    }
+    setNewScopeName("");
+  };
+
+  const deleteScope = (scopeName) => {
+    const usedCount = allItems.filter(i => getScope(checks, i.id) === scopeName).length;
+    const msg = usedCount > 0
+      ? `El scope "${scopeName}" está asignado a ${usedCount} ítem(s).\n\nSe les quitará el scope. ¿Eliminar?`
+      : `¿Eliminar el scope "${scopeName}"?`;
+    if (!window.confirm(msg)) return;
+    const updatedScopes = (audit.customScopes || []).filter(s => s !== scopeName);
+    let updatedChecks = { ...checks };
+    if (usedCount > 0) {
+      for (const [id] of Object.entries(updatedChecks)) {
+        if (getScope(updatedChecks, id) === scopeName) {
+          updatedChecks = setCheckScope(updatedChecks, id, null);
+        }
+      }
+    }
+    onUpdate({ ...audit, customScopes: updatedScopes, checks: updatedChecks });
+    if (filterScope === scopeName) setFilterScope("todas");
+  };
 
   const setStatus = (id, status) => onUpdate({ ...audit, checks: setCheckStatus(checks, id, status) });
   const setScopeForItem = (id, scope) => onUpdate({ ...audit, checks: setCheckScope(checks, id, scope) });
@@ -243,33 +273,26 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               <option value="sin-scope">Sin scope</option>
               {allScopes.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
+            {filterScope !== "todas" && filterScope !== "sin-scope" && !DEFAULT_SCOPES.includes(filterScope) && (
+              <button
+                style={{ ...css.btn("var(--danger)"), padding:"0.2rem 0.45rem", fontSize:"0.7rem" }}
+                onClick={() => deleteScope(filterScope)}
+                aria-label={`Eliminar scope ${filterScope}`}
+                title={`Eliminar scope "${filterScope}"`}
+              >✕</button>
+            )}
             <div style={{ display:"flex", gap:"0.25rem", alignItems:"center" }}>
               <input
                 style={{ ...css.input, width:"100px", padding:"0.3rem 0.5rem", fontSize:"0.75rem" }}
                 placeholder="Nuevo scope..."
                 value={newScopeName}
                 onChange={e => setNewScopeName(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter" && newScopeName.trim()) {
-                    const name = newScopeName.trim();
-                    if (!allScopes.includes(name)) {
-                      onUpdate({ ...audit, customScopes: [...(audit.customScopes || []), name] });
-                    }
-                    setNewScopeName("");
-                  }
-                }}
+                onKeyDown={e => { if (e.key === "Enter") addScope(newScopeName); }}
                 aria-label="Crear nuevo scope"
               />
               <button
                 style={{ ...css.btn("var(--accent)"), padding:"0.25rem 0.5rem", fontSize:"0.75rem" }}
-                onClick={() => {
-                  if (!newScopeName.trim()) return;
-                  const name = newScopeName.trim();
-                  if (!allScopes.includes(name)) {
-                    onUpdate({ ...audit, customScopes: [...(audit.customScopes || []), name] });
-                  }
-                  setNewScopeName("");
-                }}
+                onClick={() => addScope(newScopeName)}
                 aria-label="Añadir scope"
               >+</button>
             </div>

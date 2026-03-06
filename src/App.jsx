@@ -5,6 +5,7 @@ import Topbar from "./components/Topbar";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import AuditView from "./components/AuditView";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function getAuditIdFromHash() {
   const match = window.location.hash.match(/^#\/audit\/(.+)$/);
@@ -87,31 +88,33 @@ export default function App() {
   const activeAudit = audits.find(a => a.id === activeAuditId);
 
   return (
-    <div style={css.app}>
-      <Topbar
-        audits={audits}
-        activeAuditId={activeAuditId}
-        onImport={mergeImported}
-        onDelete={deleteAudit}
-      />
-      <div style={css.layout}>
-        <Sidebar
+    <ErrorBoundary>
+      <div style={css.app}>
+        <Topbar
           audits={audits}
           activeAuditId={activeAuditId}
-          onSelectAudit={navigateTo}
+          onImport={mergeImported}
+          onDelete={deleteAudit}
         />
-        <main style={css.main}>
-          {activeAudit ? (
-            <AuditView
-              audit={activeAudit}
-              onUpdate={updateAudit}
-              onBack={() => navigateTo(null)}
-            />
-          ) : (
-            <Dashboard audits={audits} onSelect={navigateTo} onCreate={createAudit} />
-          )}
-        </main>
+        <div style={css.layout}>
+          <Sidebar
+            audits={audits}
+            activeAuditId={activeAuditId}
+            onSelectAudit={navigateTo}
+          />
+          <main style={css.main}>
+            {activeAudit ? (
+              <AuditView
+                audit={activeAudit}
+                onUpdate={updateAudit}
+                onBack={() => navigateTo(null)}
+              />
+            ) : (
+              <Dashboard audits={audits} onSelect={navigateTo} onCreate={createAudit} />
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

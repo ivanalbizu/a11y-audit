@@ -61,29 +61,35 @@ export default function AuditView({ audit, onUpdate, onBack }) {
   const setNote = (id, note) => onUpdate({ ...audit, notes: { ...notes, [id]: note } });
   const screenshots = audit.screenshots || {};
 
-  const handleFileUpload = (itemId, file) => {
+  const compressImage = (file, maxW = 1200, quality = 0.7) => new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxW / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/webp", quality));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+
+  const handleFileUpload = async (itemId, file) => {
     if (!file || !file.type.startsWith("image/")) return;
-    if (file.size > 500 * 1024) {
-      alert("Imagen demasiado grande. Máximo 500 KB por captura.");
-      return;
-    }
     const capacity = checkStorageCapacity();
     if (capacity === "full") {
       alert("Almacenamiento lleno. Elimina capturas o exporta datos.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const updated = { ...screenshots };
-      const itemShots = [...(updated[itemId] || [])];
-      itemShots.push({ id: `ss-${Date.now()}`, data: e.target.result, name: file.name || "captura.png", addedAt: new Date().toISOString() });
-      updated[itemId] = itemShots;
-      onUpdate({ ...audit, screenshots: updated });
-      if (capacity === "warning") {
-        alert(`Aviso: Almacenamiento al ${getStorageSizeMB()} MB. Considera exportar datos.`);
-      }
-    };
-    reader.readAsDataURL(file);
+    const data = await compressImage(file);
+    const updated = { ...screenshots };
+    const itemShots = [...(updated[itemId] || [])];
+    itemShots.push({ id: `ss-${crypto.randomUUID()}`, data, name: file.name || "captura.webp", addedAt: new Date().toISOString() });
+    updated[itemId] = itemShots;
+    onUpdate({ ...audit, screenshots: updated });
+    if (capacity === "warning") {
+      alert(`Aviso: Almacenamiento al ${getStorageSizeMB()} MB. Considera exportar datos.`);
+    }
   };
 
   const handlePaste = (itemId, e) => {
@@ -220,6 +226,28 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               {Object.entries(NIVEL_CONFIG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
             <span style={{ fontSize:"0.8rem", color:"#A0A0B8", marginLeft:"auto" }} aria-live="polite">{filtered.length} ítems</span>
+            <span style={{ borderLeft:"1px solid #3A3A50", height:"20px" }} aria-hidden="true"></span>
+            <select
+              style={{ ...css.select, fontSize:"0.75rem", padding:"0.3rem 0.5rem" }}
+              value=""
+              onChange={e => {
+                const val = e.target.value;
+                if (!val) return;
+                const ids = filtered.map(i => i.id);
+                if (!window.confirm(`¿Marcar ${ids.length} ítems como "${val}"?`)) { e.target.value = ""; return; }
+                const updatedChecks = { ...checks };
+                ids.forEach(id => { updatedChecks[id] = val; });
+                onUpdate({ ...audit, checks: updatedChecks });
+                e.target.value = "";
+              }}
+              aria-label="Acción masiva sobre ítems filtrados"
+            >
+              <option value="">Bulk ▾</option>
+              <option value="pass">✓ Marcar pass</option>
+              <option value="fail">✗ Marcar fail</option>
+              <option value="na">— Marcar N/A</option>
+              <option value="pending">↺ Resetear a pendiente</option>
+            </select>
           </div>
 
           {/* Add custom item */}

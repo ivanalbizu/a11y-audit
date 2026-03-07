@@ -14,7 +14,7 @@ export default function Topbar({ audits, activeAuditId, onImport, onDelete }) {
       <div style={{ display:"flex", alignItems:"center", gap:"0.75rem" }}>
         <span style={{ fontSize:"0.8rem", color:"var(--text-secondary)" }}>{audits.length} auditorías · {CHECKLIST.length} ítems</span>
         <span style={{ fontSize:"0.75rem", color: checkStorageCapacity() === "warning" ? "var(--warning)" : checkStorageCapacity() === "full" ? "var(--danger)" : "var(--text-tertiary)", fontFamily:"'DM Mono',monospace" }}>{getStorageSizeMB()} MB</span>
-        <button style={topBtn("var(--accent-blue)")} onClick={() => exportAudits(audits)} aria-label="Exportar auditorías como JSON">
+        <button style={topBtn("var(--accent-blue)")} onClick={() => exportAudits(audits)} aria-label="Exportar auditorías como JSON" disabled={audits.length === 0}>
           ↓ Exportar JSON
         </button>
         <button style={topBtn("var(--accent-purple)")} onClick={() => document.getElementById("import-json-input").click()} aria-label="Importar auditorías desde archivo JSON">

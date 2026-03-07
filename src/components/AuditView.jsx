@@ -51,6 +51,8 @@ export default function AuditView({ audit, onUpdate, onBack }) {
   const [view, setView] = useState("checklist");
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState(EMPTY_CUSTOM_ITEM);
+  const [showAuditShots, setShowAuditShots] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
 
   const customItems = audit.customItems || [];
   const allItems = [...CHECKLIST, ...customItems];
@@ -167,6 +169,27 @@ export default function AuditView({ audit, onUpdate, onBack }) {
     onUpdate({ ...audit, customItems: updatedCustom, checks: updatedChecks, notes: updatedNotes, screenshots: updatedScreenshots });
   };
 
+  const auditScreenshots = audit.auditScreenshots || [];
+
+  const handleAuditScreenshot = async (file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    const capacity = checkStorageCapacity();
+    if (capacity === "full") { alert("Almacenamiento lleno. Elimina capturas o exporta datos."); return; }
+    const data = await compressImage(file);
+    const shot = { id: `as-${crypto.randomUUID()}`, data, name: file.name || "captura.webp", addedAt: new Date().toISOString(), label: "" };
+    onUpdate({ ...audit, auditScreenshots: [...auditScreenshots, shot] });
+    if (capacity === "warning") alert(`Aviso: Almacenamiento al ${getStorageSizeMB()} MB. Considera exportar datos.`);
+  };
+
+  const deleteAuditScreenshot = (ssId) => {
+    if (!window.confirm("¿Eliminar esta captura?")) return;
+    onUpdate({ ...audit, auditScreenshots: auditScreenshots.filter(s => s.id !== ssId) });
+  };
+
+  const updateAuditScreenshotLabel = (ssId, label) => {
+    onUpdate({ ...audit, auditScreenshots: auditScreenshots.map(s => s.id === ssId ? { ...s, label } : s) });
+  };
+
   const filtered = allItems.filter(item => {
     if (filterArea !== "Todas" && item.area !== filterArea) return false;
     if (filterSev !== "todas" && item.sev !== filterSev) return false;
@@ -221,6 +244,54 @@ export default function AuditView({ audit, onUpdate, onBack }) {
           <button role="tab" id="tab-glossary" aria-selected={view==="glossary"} aria-controls="panel-glossary" style={{ ...css.btn(view==="glossary"?"var(--accent)":"var(--text-tertiary)") }} onClick={() => setView("glossary")}>Glosario</button>
         </div>
       </nav>
+
+      {/* Audit-level screenshots */}
+      <div style={{ ...css.card, padding:"0.75rem 1rem", marginBottom:"1rem" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <button
+            onClick={() => setShowAuditShots(!showAuditShots)}
+            style={{ background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:"0.5rem", padding:0, color:"var(--text-primary)", fontSize:"0.85rem", fontWeight:600 }}
+            aria-expanded={showAuditShots}
+          >
+            <span style={{ fontSize:"0.75rem", color:"var(--text-tertiary)" }}>{showAuditShots ? "▲" : "▼"}</span>
+            Capturas de la web
+            {auditScreenshots.length > 0 && <span style={{ fontSize:"0.75rem", color:"var(--text-secondary)", fontWeight:400 }}>({auditScreenshots.length})</span>}
+          </button>
+          <label htmlFor="audit-screenshot-input" style={{ ...css.btn("var(--accent-blue)"), cursor:"pointer", display:"inline-flex", alignItems:"center", gap:"0.3rem", padding:"0.25rem 0.6rem", fontSize:"0.75rem" }}>
+            + Captura
+            <input id="audit-screenshot-input" type="file" accept="image/*" aria-label="Adjuntar captura de la web" style={{ position:"absolute", width:"1px", height:"1px", overflow:"hidden", clip:"rect(0,0,0,0)" }}
+              onChange={e => { handleAuditScreenshot(e.target.files[0]); e.target.value = ""; }}
+            />
+          </label>
+        </div>
+        {showAuditShots && auditScreenshots.length > 0 && (
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:"0.75rem", marginTop:"0.75rem" }}>
+            {auditScreenshots.map(ss => (
+              <div key={ss.id} style={{ ...S.ssContainer, borderRadius:"6px" }}>
+                <img src={ss.data} alt={ss.label || ss.name} style={{ width:"100%", height:"140px", objectFit:"cover", display:"block", cursor:"pointer" }}
+                  onClick={() => setLightbox({ src: ss.data, alt: ss.label || ss.name })}
+                />
+                <div style={{ padding:"0.4rem 0.5rem", background:"var(--bg-card)", borderTop:"1px solid var(--border)" }}>
+                  <input
+                    value={ss.label || ""}
+                    onChange={e => updateAuditScreenshotLabel(ss.id, e.target.value)}
+                    placeholder="Descripción de la captura..."
+                    style={{ ...css.input, fontSize:"0.75rem", padding:"0.2rem 0.4rem", width:"100%", boxSizing:"border-box" }}
+                    aria-label={`Descripción de captura ${ss.name}`}
+                  />
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:"0.3rem" }}>
+                    <span style={{ fontSize:"0.65rem", color:"var(--text-tertiary)" }}>{new Date(ss.addedAt).toLocaleDateString()}</span>
+                    <button onClick={() => deleteAuditScreenshot(ss.id)} style={{ ...css.btn("var(--danger)"), padding:"0.15rem 0.4rem", fontSize:"0.65rem" }} aria-label={`Eliminar captura ${ss.label || ss.name}`}>✕</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {showAuditShots && auditScreenshots.length === 0 && (
+          <p style={{ fontSize:"0.8rem", color:"var(--text-tertiary)", margin:"0.5rem 0 0" }}>No hay capturas. Adjunta capturas del estado actual de la web para documentar cambios entre auditorías.</p>
+        )}
+      </div>
 
       {view === "glossary" ? (
         <div role="tabpanel" id="panel-glossary" aria-labelledby="tab-glossary"><GlossaryView /></div>
@@ -297,39 +368,6 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               >+</button>
             </div>
             <span style={{ fontSize:"0.8rem", color:"var(--text-secondary)", marginLeft:"auto" }} aria-live="polite">{filtered.length} ítems</span>
-            <span style={{ borderLeft:"1px solid var(--border-hover)", height:"20px" }} aria-hidden="true"></span>
-            <select
-              style={{ ...css.select, fontSize:"0.75rem", padding:"0.3rem 0.5rem" }}
-              value=""
-              onChange={e => {
-                const val = e.target.value;
-                if (!val) return;
-                const ids = filtered.map(i => i.id);
-                if (val.startsWith("scope:")) {
-                  const scope = val.replace("scope:", "") || null;
-                  if (!window.confirm(`¿Asignar scope "${scope || "ninguno"}" a ${ids.length} ítems?`)) { e.target.value = ""; return; }
-                  let updatedChecks = { ...checks };
-                  ids.forEach(id => { updatedChecks = setCheckScope(updatedChecks, id, scope); });
-                  onUpdate({ ...audit, checks: updatedChecks });
-                } else {
-                  if (!window.confirm(`¿Marcar ${ids.length} ítems como "${val}"?`)) { e.target.value = ""; return; }
-                  let updatedChecks = { ...checks };
-                  ids.forEach(id => { updatedChecks = setCheckStatus(updatedChecks, id, val); });
-                  onUpdate({ ...audit, checks: updatedChecks });
-                }
-                e.target.value = "";
-              }}
-              aria-label="Acción masiva sobre ítems filtrados"
-            >
-              <option value="">Bulk ▾</option>
-              <option value="pass">✓ Marcar pass</option>
-              <option value="fail">✗ Marcar fail</option>
-              <option value="na">— Marcar N/A</option>
-              <option value="pending">↺ Resetear a pendiente</option>
-              <option disabled>── Scope ──</option>
-              <option value="scope:">Quitar scope</option>
-              {allScopes.map(s => <option key={s} value={`scope:${s}`}>Scope: {s}</option>)}
-            </select>
           </div>
 
           {/* Add custom item */}
@@ -544,7 +582,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                                   {screenshots[item.id].map(ss => (
                                     <div key={ss.id} style={S.ssContainer}>
                                       <img src={ss.data} alt={ss.name} style={S.ssThumb}
-                                        onClick={() => window.open(ss.data, "_blank")}
+                                        onClick={() => setLightbox({ src: ss.data, alt: ss.name })}
                                       />
                                       <button
                                         onClick={() => deleteScreenshot(item.id, ss.id)}
@@ -567,6 +605,17 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               </div>
             );
           })()}
+        </div>
+      )}
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"zoom-out" }}
+          role="dialog"
+          aria-label="Vista ampliada de captura"
+        >
+          <img src={lightbox.src} alt={lightbox.alt} style={{ maxWidth:"90vw", maxHeight:"90vh", objectFit:"contain", borderRadius:"6px" }} />
         </div>
       )}
     </section>

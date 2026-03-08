@@ -156,9 +156,9 @@ El archivo `demo-audits.json` en la raíz del proyecto contiene 3 auditorías de
 
 ### Accesibilidad
 
-- [ ] **Focus trap en lightbox** — Atrapar foco dentro del dialog y cerrar con Escape
-- [ ] **Skip link** — Enlace "Saltar al contenido" para usuarios de teclado
-- [ ] **Focus visible personalizado** — Estilo `:focus-visible` para botones e interactivos
+- [x] **Focus trap en lightbox** — Atrapar foco dentro del dialog y cerrar con Escape
+- [x] **Skip link** — Enlace "Saltar al contenido" para usuarios de teclado
+- [x] **Focus visible personalizado** — Estilo `:focus-visible` para botones e interactivos
 
 ### Técnico
 

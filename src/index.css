@@ -63,6 +63,27 @@ body {
   min-height: 100vh;
 }
 
+/* Skip link — visible only on focus for keyboard users */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 10000;
+  padding: 0.6rem 1.2rem;
+  background: var(--accent-blue);
+  color: #fff;
+  border-radius: 0 0 6px 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: top 0.15s;
+}
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* Focus visible — global, high contrast ring on all interactive elements */
 :focus-visible {
   outline: 3px solid var(--accent-blue);
@@ -71,6 +92,16 @@ body {
 
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* Enhanced focus for buttons and selects inside cards */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--accent-blue);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(108, 180, 255, 0.15);
 }
 
 a {

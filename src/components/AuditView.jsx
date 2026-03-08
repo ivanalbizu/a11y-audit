@@ -14,7 +14,7 @@ import { openReport } from "../utils/reportGenerator";
 const EMPTY_CUSTOM_ITEM = { item:"", area:"Perceivable", cat:"", wcag:"—", nivel:"A", sev:"medium", tipo:"manual", effort:"medium", who:"", desc:"", fix:"", team:"" };
 
 // Extracted styles for elements rendered inside .map() loops (avoids re-creating objects per render)
-const GRID_COLS = "72px 68px 70px 1fr 42px 82px 24px 114px 90px";
+const GRID_COLS = "72px 68px 70px 1fr 56px 82px 24px 114px 90px";
 const S = {
   hdr: { fontSize:"0.7rem", color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600, fontFamily:"'DM Mono',monospace" },
   headerRow: { display:"grid", gridTemplateColumns:GRID_COLS, gap:"0 0.75rem", alignItems:"center", padding:"0.5rem 1rem", position:"sticky", top:0, zIndex:10, background:"var(--bg-main)", borderBottom:"2px solid var(--border)", marginBottom:"4px" },
@@ -669,15 +669,29 @@ export default function AuditView({ audit, onUpdate, onBack }) {
           })()}
         </div>
       )}
-      {/* Lightbox */}
+      {/* Lightbox with focus trap */}
       {lightbox && (
         <div
-          onClick={() => setLightbox(null)}
-          style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"zoom-out" }}
           role="dialog"
           aria-label="Vista ampliada de captura"
+          aria-modal="true"
+          style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:"1rem" }}
+          onClick={e => { if (e.target === e.currentTarget) setLightbox(null); }}
+          onKeyDown={e => { if (e.key === "Escape") setLightbox(null); }}
         >
-          <img src={lightbox.src} alt={lightbox.alt} style={{ maxWidth:"90vw", maxHeight:"90vh", objectFit:"contain", borderRadius:"6px" }} />
+          <img src={lightbox.src} alt={lightbox.alt} style={{ maxWidth:"90vw", maxHeight:"85vh", objectFit:"contain", borderRadius:"6px" }} />
+          <button
+            ref={el => el?.focus()}
+            onClick={() => setLightbox(null)}
+            style={{ background:"rgba(255,255,255,0.15)", border:"2px solid rgba(255,255,255,0.4)", color:"#fff", borderRadius:"6px", padding:"0.5rem 1.25rem", fontSize:"0.85rem", cursor:"pointer", fontFamily:"'DM Mono',monospace" }}
+            aria-label="Cerrar vista ampliada"
+            onKeyDown={e => {
+              // Focus trap: keep Tab on the close button
+              if (e.key === "Tab") { e.preventDefault(); }
+            }}
+          >
+            Cerrar (Esc)
+          </button>
         </div>
       )}
     </section>

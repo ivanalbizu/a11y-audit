@@ -134,6 +134,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div style={css.app}>
+        <a href="#main-content" className="skip-link">Saltar al contenido</a>
         <Topbar
           audits={audits}
           activeAuditId={activeAuditId}
@@ -146,7 +147,7 @@ export default function App() {
             activeAuditId={activeAuditId}
             onSelectAudit={navigateTo}
           />
-          <main style={css.main}>
+          <main id="main-content" style={css.main}>
             {activeAudit ? (
               <AuditView
                 audit={activeAudit}

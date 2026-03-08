@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { CHECKLIST } from "../data/checklist";
 import { SEV_CONFIG, EFFORT_CONFIG, STATUS_CONFIG, TIPO_CONFIG, NIVEL_CONFIG, AREAS, DEFAULT_SCOPES, SCOPE_COLORS } from "../data/config";
 import { css } from "../styles/theme";
@@ -18,7 +18,7 @@ const GRID_COLS = "72px 68px 70px 1fr 56px 82px 24px 114px 90px";
 const S = {
   hdr: { fontSize:"0.7rem", color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600, fontFamily:"'DM Mono',monospace" },
   headerRow: { display:"grid", gridTemplateColumns:GRID_COLS, gap:"0 0.75rem", alignItems:"center", padding:"0.5rem 1rem", position:"sticky", top:0, zIndex:10, background:"var(--bg-main)", borderBottom:"2px solid var(--border)", marginBottom:"4px" },
-  rowGrid: { display:"grid", gridTemplateColumns:GRID_COLS, gap:"0 0.75rem", alignItems:"center", padding:"0.65rem 1rem", cursor:"pointer" },
+  rowGrid: { display:"grid", gridTemplateColumns:GRID_COLS, gap:"0 0.75rem", alignItems:"center", padding:"0.35rem 1rem", cursor:"pointer" },
   cellId: { fontFamily:"'DM Mono',monospace", fontSize:"0.75rem", display:"flex", alignItems:"center", gap:"0.25rem" },
   cellWcag: { fontFamily:"'DM Mono',monospace", fontSize:"0.75rem" },
   wcagLink: { color:"var(--accent-blue)", textDecoration:"none" },
@@ -119,7 +119,16 @@ export default function AuditView({ audit, onUpdate, onBack }) {
 
   const setStatus = (id, status) => onUpdate({ ...audit, checks: setCheckStatus(checks, id, status) });
   const setScopeForItem = (id, scope) => onUpdate({ ...audit, checks: setCheckScope(checks, id, scope) });
-  const setNote = (id, note) => onUpdate({ ...audit, notes: { ...notes, [id]: note } });
+  const [localNotes, setLocalNotes] = useState({});
+  const noteTimers = useRef({});
+  const setNote = useCallback((id, note) => {
+    setLocalNotes(prev => ({ ...prev, [id]: note }));
+    clearTimeout(noteTimers.current[id]);
+    noteTimers.current[id] = setTimeout(() => {
+      onUpdate({ ...audit, notes: { ...notes, [id]: note } });
+      setLocalNotes(prev => { const n = { ...prev }; delete n[id]; return n; });
+    }, 500);
+  }, [audit, notes, onUpdate]);
   const screenshots = audit.screenshots || {};
 
   const compressImage = (file, maxW = 1200, quality = 0.7) => new Promise((resolve) => {
@@ -632,7 +641,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
                               </div>
                               <textarea
                                 id={`notes-${item.id}`}
-                                value={notes[item.id] || ""}
+                                value={localNotes[item.id] !== undefined ? localNotes[item.id] : (notes[item.id] || "")}
                                 onChange={e => setNote(item.id, e.target.value)}
                                 onPaste={e => handlePaste(item.id, e)}
                                 placeholder="Escribe notas o pega capturas con Ctrl+V..."

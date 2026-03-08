@@ -1,10 +1,22 @@
+import { useState, useEffect } from "react";
 import { CHECKLIST } from "../data/checklist";
 import { css } from "../styles/theme";
 import { exportAudits, importAudits, getStorageSizeMB, checkStorageCapacity } from "../utils/storage";
+import { getScreenshotsSizeMB } from "../utils/screenshotDb";
 
 const topBtn = (accent) => ({ ...css.btn(accent), display:"inline-flex", alignItems:"center", justifyContent:"center", minWidth:"140px", height:"32px", boxSizing:"border-box" });
 
 export default function Topbar({ audits, activeAuditId, onImport, onDelete }) {
+  const [totalMB, setTotalMB] = useState(getStorageSizeMB());
+
+  useEffect(() => {
+    getScreenshotsSizeMB().then(idbMB => {
+      const lsMB = parseFloat(getStorageSizeMB());
+      const idb = parseFloat(idbMB) || 0;
+      setTotalMB((lsMB + idb).toFixed(2));
+    });
+  }, [audits]);
+
   return (
     <header style={css.topbar} role="banner">
       <div style={{ display:"flex", alignItems:"center", gap:"0.5rem" }}>
@@ -13,7 +25,7 @@ export default function Topbar({ audits, activeAuditId, onImport, onDelete }) {
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:"0.75rem" }}>
         <span style={{ fontSize:"0.8rem", color:"var(--text-secondary)" }}>{audits.length} auditorías · {CHECKLIST.length} ítems</span>
-        <span style={{ fontSize:"0.75rem", color: checkStorageCapacity() === "warning" ? "var(--warning)" : checkStorageCapacity() === "full" ? "var(--danger)" : "var(--text-tertiary)", fontFamily:"'DM Mono',monospace" }}>{getStorageSizeMB()} MB</span>
+        <span style={{ fontSize:"0.75rem", color: checkStorageCapacity() === "warning" ? "var(--warning)" : checkStorageCapacity() === "full" ? "var(--danger)" : "var(--text-tertiary)", fontFamily:"'DM Mono',monospace" }}>{totalMB} MB</span>
         <button style={topBtn("var(--accent-blue)")} onClick={() => exportAudits(audits)} aria-label="Exportar auditorías como JSON" disabled={audits.length === 0}>
           ↓ Exportar JSON
         </button>

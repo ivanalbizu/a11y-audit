@@ -162,4 +162,5 @@ El archivo `demo-audits.json` en la raíz del proyecto contiene 3 auditorías de
 
 ### Técnico
 
-- [ ] **Indicador de almacenamiento real** — El contador de MB en Topbar solo mide localStorage; debería sumar IndexedDB (`navigator.storage.estimate()`)
+- [x] **Indicador de almacenamiento real** — El contador de MB en Topbar suma localStorage + IndexedDB (`navigator.storage.estimate()`)
+- [x] **Debounce en notas** — Las notas usan debounce de 500ms para evitar guardar en cada keystroke

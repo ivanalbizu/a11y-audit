@@ -1,21 +1,29 @@
 import { migrateAudit } from "./checks";
+import { saveScreenshots, loadAllScreenshots, deleteScreenshots } from "./screenshotDb";
 
 const STORAGE_KEY = "a11y-audits";
-const WARN_THRESHOLD = 4 * 1024 * 1024;
-const MAX_THRESHOLD = 9 * 1024 * 1024;
 
-export function saveAudits(audits) {
+/** Strip screenshots from audit for localStorage (lightweight) */
+function stripScreenshots(audit) {
+  const { screenshots, auditScreenshots, ...rest } = audit;
+  return rest;
+}
+
+/** Save audits: lightweight data to localStorage, screenshots to IndexedDB */
+export async function saveAudits(audits) {
   try {
-    const json = JSON.stringify(audits);
-    const size = new Blob([json]).size;
-    if (size > MAX_THRESHOLD) {
-      alert("Almacenamiento casi lleno. Elimina capturas o exporta datos antes de continuar.");
-      return false;
-    }
+    // Save screenshots to IndexedDB (in parallel)
+    await Promise.all(audits.map(a =>
+      saveScreenshots(a.id, {
+        screenshots: a.screenshots || {},
+        auditScreenshots: a.auditScreenshots || [],
+      })
+    ));
+
+    // Save lightweight data to localStorage
+    const lightweight = audits.map(stripScreenshots);
+    const json = JSON.stringify(lightweight);
     localStorage.setItem(STORAGE_KEY, json);
-    if (size > WARN_THRESHOLD) {
-      console.warn(`Storage at ${(size / 1024 / 1024).toFixed(1)}MB — approaching limit`);
-    }
     return true;
   } catch (e) {
     if (e.name === "QuotaExceededError") {
@@ -26,17 +34,46 @@ export function saveAudits(audits) {
   }
 }
 
-export function loadAudits() {
+/** Load audits from localStorage + hydrate with screenshots from IndexedDB */
+export async function loadAudits() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    const audits = data ? JSON.parse(data) : [];
-    return audits.map(migrateAudit);
-  } catch {
+    let audits = data ? JSON.parse(data) : [];
+    audits = audits.map(migrateAudit);
+
+    // Migrate: if any audit still has screenshots in localStorage, move to IndexedDB
+    const needsMigration = audits.some(a =>
+      (a.screenshots && Object.keys(a.screenshots).length > 0) ||
+      (a.auditScreenshots && a.auditScreenshots.length > 0)
+    );
+
+    if (needsMigration) {
+      await Promise.all(audits.map(a =>
+        saveScreenshots(a.id, {
+          screenshots: a.screenshots || {},
+          auditScreenshots: a.auditScreenshots || [],
+        })
+      ));
+      // Re-save without screenshots to free localStorage
+      const lightweight = audits.map(stripScreenshots);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lightweight));
+      console.info("Screenshots migrated from localStorage to IndexedDB");
+    }
+
+    // Hydrate with screenshots from IndexedDB
+    const allShots = await loadAllScreenshots();
+    return audits.map(a => ({
+      ...a,
+      screenshots: allShots[a.id]?.screenshots || a.screenshots || {},
+      auditScreenshots: allShots[a.id]?.auditScreenshots || a.auditScreenshots || [],
+    }));
+  } catch (e) {
+    console.error("Error loading audits:", e);
     return [];
   }
 }
 
-export function exportAudits(audits) {
+export async function exportAudits(audits) {
   const blob = new Blob([JSON.stringify(audits, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -46,7 +83,7 @@ export function exportAudits(audits) {
   URL.revokeObjectURL(url);
 }
 
-export function exportSingleAudit(audit) {
+export async function exportSingleAudit(audit) {
   const blob = new Blob([JSON.stringify(audit, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -75,10 +112,14 @@ export function getStorageSizeMB() {
 }
 
 export function checkStorageCapacity() {
+  // With IndexedDB handling screenshots, localStorage usage is much lower
+  // but we still check for safety
   const data = localStorage.getItem(STORAGE_KEY);
   if (!data) return "ok";
   const size = new Blob([data]).size;
-  if (size > MAX_THRESHOLD) return "full";
-  if (size > WARN_THRESHOLD) return "warning";
+  if (size > 9 * 1024 * 1024) return "full";
+  if (size > 4 * 1024 * 1024) return "warning";
   return "ok";
 }
+
+export { deleteScreenshots };

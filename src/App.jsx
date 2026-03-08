@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { saveAudits, loadAudits } from "./utils/storage";
+import { saveAudits, loadAudits, deleteScreenshots } from "./utils/storage";
 import { css } from "./styles/theme";
 import { getStatus, getScope } from "./utils/checks";
 import Topbar from "./components/Topbar";
@@ -14,8 +14,14 @@ function getAuditIdFromHash() {
 }
 
 export default function App() {
-  const [audits, setAudits] = useState(() => loadAudits());
+  const [audits, setAudits] = useState([]);
   const [activeAuditId, setActiveAuditId] = useState(() => getAuditIdFromHash());
+  const [loading, setLoading] = useState(true);
+
+  // Async initial load
+  useEffect(() => {
+    loadAudits().then(data => { setAudits(data); setLoading(false); });
+  }, []);
 
   const persist = useCallback((updated) => {
     setAudits(updated);
@@ -117,10 +123,13 @@ export default function App() {
 
   const deleteAudit = (id) => {
     persist(audits.filter(a => a.id !== id));
+    deleteScreenshots(id);
     if (activeAuditId === id) navigateTo(null);
   };
 
   const activeAudit = audits.find(a => a.id === activeAuditId);
+
+  if (loading) return <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", color:"var(--text-secondary)" }}>Cargando...</div>;
 
   return (
     <ErrorBoundary>

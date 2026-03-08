@@ -9,11 +9,12 @@ import VersionsView from "./VersionsView";
 import GlossaryView from "./GlossaryView";
 import { checkStorageCapacity, getStorageSizeMB, exportSingleAudit } from "../utils/storage";
 import { getStatus, getScope, setCheckStatus, setCheckScope, isInherited } from "../utils/checks";
+import { openReport } from "../utils/reportGenerator";
 
 const EMPTY_CUSTOM_ITEM = { item:"", area:"Perceivable", cat:"", wcag:"—", nivel:"A", sev:"medium", tipo:"manual", effort:"medium", who:"", desc:"", fix:"", team:"" };
 
 // Extracted styles for elements rendered inside .map() loops (avoids re-creating objects per render)
-const GRID_COLS = "72px 68px 80px 1fr 42px 82px 24px 114px 90px";
+const GRID_COLS = "72px 68px 70px 1fr 42px 82px 24px 114px 90px";
 const S = {
   hdr: { fontSize:"0.7rem", color:"var(--text-tertiary)", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600, fontFamily:"'DM Mono',monospace" },
   headerRow: { display:"grid", gridTemplateColumns:GRID_COLS, gap:"0 0.75rem", alignItems:"center", padding:"0.5rem 1rem", position:"sticky", top:0, zIndex:10, background:"var(--bg-main)", borderBottom:"2px solid var(--border)", marginBottom:"4px" },
@@ -237,6 +238,7 @@ export default function AuditView({ audit, onUpdate, onBack }) {
           <input id="audit-end-date" type="date" value={audit.endDate || ""} onChange={e => onUpdate({ ...audit, endDate: e.target.value || null })} style={{ ...css.input, width:"130px", padding:"0.2rem 0.4rem", fontSize:"0.75rem" }} />
         </div>
         <button style={{ ...css.btn("var(--accent-blue)"), padding:"0.25rem 0.6rem", fontSize:"0.75rem" }} onClick={() => exportSingleAudit(audit)} aria-label="Exportar esta auditoría como JSON">↓ Exportar</button>
+        <button style={{ ...css.btn("var(--accent-purple)"), padding:"0.25rem 0.6rem", fontSize:"0.75rem" }} onClick={() => openReport(audit)} aria-label="Generar informe HTML para cliente">Informe</button>
         <div style={{ marginLeft:"auto", display:"flex", gap:"0.5rem" }} role="tablist" aria-label="Vista de auditoría">
           <button role="tab" id="tab-checklist" aria-selected={view==="checklist"} aria-controls="panel-checklist" style={{ ...css.btn(view==="checklist"?"var(--accent)":"var(--text-tertiary)") }} onClick={() => setView("checklist")}>Checklist</button>
           <button role="tab" id="tab-summary" aria-selected={view==="summary"} aria-controls="panel-summary" style={{ ...css.btn(view==="summary"?"var(--accent)":"var(--text-tertiary)") }} onClick={() => setView("summary")}>Resumen</button>

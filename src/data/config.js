@@ -16,9 +16,9 @@ export const EFFORT_CONFIG = {
 };
 
 export const TIPO_CONFIG = {
-  auto:   { label:"🤖 Auto",   color:"var(--accent-blue)" },
-  manual: { label:"👁 Manual",  color:"var(--accent-purple)" },
-  both:   { label:"⚡ Ambos",   color:"var(--warning)" },
+  auto:   { label:"Auto",   color:"var(--accent-blue)" },
+  manual: { label:"Manual",  color:"var(--accent-purple)" },
+  both:   { label:"Ambos",   color:"var(--warning)" },
 };
 
 export const NIVEL_CONFIG = {

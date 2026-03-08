@@ -19,12 +19,15 @@ Aplicación web para gestionar auditorías de accesibilidad siguiendo el estánd
 - **Notas y evidencias** — Textarea auto-creciente por ítem para documentar hallazgos
 - **Scopes** — Clasificar cada ítem del checklist por scope (Global, Header, Footer o personalizado)
 - **Herencia de checks** — Al crear auditoría de un dominio existente, importar checks compartidos (scoped)
-- **Operaciones masivas** — Marcar estado o asignar scope a todos los ítems filtrados
+- **Capturas a nivel de auditoría** — Documentar el estado visual de la web entre auditorías, con descripción y fecha
+- **Lightbox** — Vista ampliada de capturas con overlay (click para cerrar)
+- **Generación de informe** — Informe HTML autónomo con resumen, stats, fallos, capturas y checklist completo, listo para imprimir como PDF
+- **IndexedDB para capturas** — Almacenamiento de imágenes en IndexedDB (cientos de MB) en vez de localStorage
 - **Compresión de capturas** — Imágenes comprimidas automáticamente a WebP (max 1200px, calidad 0.7)
 - **Temas claro/oscuro** — Automático via `prefers-color-scheme`, con colores ajustados para contraste AA
 - **Error Boundary** — Fallback UI ante crashes de componentes con opción de reintentar o limpiar datos
 - **Control de almacenamiento** — Indicador de uso en MB, aviso al 4 MB, bloqueo al 9 MB
-- **Persistencia en localStorage** — Los datos se guardan automáticamente en el navegador
+- **Persistencia en localStorage + IndexedDB** — Datos ligeros en localStorage, capturas en IndexedDB
 
 ## Áreas del checklist
 
@@ -101,8 +104,10 @@ src/
 ├── styles/
 │   └── theme.js        # Sistema de estilos inline (paleta, tipografía, componentes)
 ├── utils/
-│   ├── storage.js      # Persistencia localStorage, exportar/importar JSON, control de capacidad
-│   └── checks.js       # Helpers del modelo de checks (status + scope, migración)
+│   ├── storage.js      # Persistencia localStorage + IndexedDB, exportar/importar JSON, control de capacidad
+│   ├── checks.js       # Helpers del modelo de checks (status + scope, migración)
+│   ├── screenshotDb.js # Wrapper IndexedDB para almacenamiento de capturas
+│   └── reportGenerator.js # Generador de informe HTML autónomo para clientes
 ├── components/
 │   ├── Topbar.jsx      # Barra superior con exportar/importar/eliminar + indicador de almacenamiento
 │   ├── Sidebar.jsx     # Navegación lateral con lista de auditorías y fechas
@@ -139,3 +144,22 @@ El archivo `demo-audits.json` en la raíz del proyecto contiene 3 auditorías de
 | `pnpm build` | Build de producción en `dist/` |
 | `pnpm preview` | Previsualización del build |
 | `pnpm lint` | Linter con ESLint |
+
+## TODO
+
+### UX / Funcionalidad
+
+- [x] **Exportar CSV** — Exportar checklist como CSV para abrir en Excel/Google Sheets
+- [x] **Copiar como tabla** — Botón que copia datos al portapapeles como tabla HTML (pegar en Sheets/Notion/email)
+- [x] **Filtros persistentes** — Recordar filtros activos por sesión al cambiar entre auditorías
+- [x] **Ordenar columnas** — Click en cabecera del checklist para ordenar por severidad, estado, WCAG, etc.
+
+### Accesibilidad
+
+- [ ] **Focus trap en lightbox** — Atrapar foco dentro del dialog y cerrar con Escape
+- [ ] **Skip link** — Enlace "Saltar al contenido" para usuarios de teclado
+- [ ] **Focus visible personalizado** — Estilo `:focus-visible` para botones e interactivos
+
+### Técnico
+
+- [ ] **Indicador de almacenamiento real** — El contador de MB en Topbar solo mide localStorage; debería sumar IndexedDB (`navigator.storage.estimate()`)

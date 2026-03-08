@@ -7,7 +7,7 @@ import SummaryView from "./SummaryView";
 import { getWcagUrls } from "../data/wcagLinks";
 import VersionsView from "./VersionsView";
 import GlossaryView from "./GlossaryView";
-import { checkStorageCapacity, getStorageSizeMB, exportSingleAudit } from "../utils/storage";
+import { checkStorageCapacity, getStorageSizeMB, exportSingleAudit, exportCsv, copyAsTable } from "../utils/storage";
 import { getStatus, getScope, setCheckStatus, setCheckScope, isInherited } from "../utils/checks";
 import { openReport } from "../utils/reportGenerator";
 
@@ -40,14 +40,36 @@ const S = {
   labelStyle: { fontSize:"0.75rem", color:"var(--text-label)", textTransform:"uppercase", letterSpacing:"0.1em", fontWeight:600 },
 };
 
+const SEV_ORDER = { critical:0, high:1, medium:2, low:3 };
+const STATUS_ORDER = { fail:0, partial:1, pass:2, na:3, pending:4 };
+
+function sessionFilter(key, fallback) {
+  const stored = sessionStorage.getItem(`a11y-filter-${key}`);
+  return stored !== null ? stored : fallback;
+}
+
 export default function AuditView({ audit, onUpdate, onBack }) {
-  const [filterArea, setFilterArea] = useState("Todas");
-  const [filterSev, setFilterSev] = useState("todas");
-  const [filterStatus, setFilterStatus] = useState("todas");
-  const [filterTipo, setFilterTipo] = useState("todas");
-  const [filterNivel, setFilterNivel] = useState("todas");
-  const [filterScope, setFilterScope] = useState("todas");
+  const [filterArea, _setFilterArea] = useState(() => sessionFilter("area", "Todas"));
+  const [filterSev, _setFilterSev] = useState(() => sessionFilter("sev", "todas"));
+  const [filterStatus, _setFilterStatus] = useState(() => sessionFilter("status", "todas"));
+  const [filterTipo, _setFilterTipo] = useState(() => sessionFilter("tipo", "todas"));
+  const [filterNivel, _setFilterNivel] = useState(() => sessionFilter("nivel", "todas"));
+  const [filterScope, _setFilterScope] = useState(() => sessionFilter("scope", "todas"));
   const [search, setSearch] = useState("");
+  const [sortCol, setSortCol] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
+
+  const setFilterArea = v => { _setFilterArea(v); sessionStorage.setItem("a11y-filter-area", v); };
+  const setFilterSev = v => { _setFilterSev(v); sessionStorage.setItem("a11y-filter-sev", v); };
+  const setFilterStatus = v => { _setFilterStatus(v); sessionStorage.setItem("a11y-filter-status", v); };
+  const setFilterTipo = v => { _setFilterTipo(v); sessionStorage.setItem("a11y-filter-tipo", v); };
+  const setFilterNivel = v => { _setFilterNivel(v); sessionStorage.setItem("a11y-filter-nivel", v); };
+  const setFilterScope = v => { _setFilterScope(v); sessionStorage.setItem("a11y-filter-scope", v); };
+
+  const toggleSort = (col) => {
+    if (sortCol === col) { setSortDir(d => d === "asc" ? "desc" : "asc"); }
+    else { setSortCol(col); setSortDir("asc"); }
+  };
   const [expanded, setExpanded] = useState(null);
   const [view, setView] = useState("checklist");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -205,6 +227,19 @@ export default function AuditView({ audit, onUpdate, onBack }) {
     if (search && !item.item.toLowerCase().includes(search.toLowerCase()) && !item.id.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  const sorted = sortCol ? [...filtered].sort((a, b) => {
+    let va, vb;
+    if (sortCol === "sev") { va = SEV_ORDER[a.sev] ?? 9; vb = SEV_ORDER[b.sev] ?? 9; }
+    else if (sortCol === "status") { va = STATUS_ORDER[getStatus(checks, a.id)] ?? 9; vb = STATUS_ORDER[getStatus(checks, b.id)] ?? 9; }
+    else if (sortCol === "wcag") { va = a.wcag; vb = b.wcag; }
+    else if (sortCol === "nivel") { va = a.nivel; vb = b.nivel; }
+    else if (sortCol === "id") { va = a.id; vb = b.id; }
+    else { va = a[sortCol]; vb = b[sortCol]; }
+    if (va < vb) return sortDir === "asc" ? -1 : 1;
+    if (va > vb) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  }) : filtered;
 
   // Stats
   const total = allItems.length;
@@ -370,6 +405,16 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               >+</button>
             </div>
             <span style={{ fontSize:"0.8rem", color:"var(--text-secondary)", marginLeft:"auto" }} aria-live="polite">{filtered.length} ítems</span>
+            <button
+              style={{ ...css.btn("var(--accent-blue)"), padding:"0.25rem 0.55rem", fontSize:"0.7rem" }}
+              onClick={() => exportCsv(sorted, checks, getStatus, getScope, audit.domain)}
+              aria-label="Exportar checklist filtrado como CSV"
+            >↓ CSV</button>
+            <button
+              style={{ ...css.btn("var(--accent)"), padding:"0.25rem 0.55rem", fontSize:"0.7rem" }}
+              onClick={() => copyAsTable(sorted, checks, getStatus, getScope)}
+              aria-label="Copiar checklist filtrado como tabla al portapapeles"
+            >Copiar tabla</button>
           </div>
 
           {/* Add custom item */}
@@ -455,20 +500,35 @@ export default function AuditView({ audit, onUpdate, onBack }) {
               <div role="table" aria-label="Ítems del checklist">
                 {/* Sticky header */}
                 <div role="row" style={S.headerRow}>
-                  <span role="columnheader" style={S.hdr}>ID</span>
-                  <span role="columnheader" style={S.hdr}>Sev.</span>
-                  <span role="columnheader" style={S.hdr}>Tipo</span>
-                  <span role="columnheader" style={S.hdr}>Descripción</span>
-                  <span role="columnheader" style={S.hdr}>Nivel</span>
-                  <span role="columnheader" style={S.hdr}>WCAG</span>
-                  <span role="columnheader" style={S.hdr} aria-hidden="true"></span>
-                  <span role="columnheader" style={S.hdr}>Estado</span>
-                  <span role="columnheader" style={S.hdr}>Scope</span>
+                  {[
+                    { col:"id", label:"ID" },
+                    { col:"sev", label:"Sev." },
+                    { col:"tipo", label:"Tipo" },
+                    { col:null, label:"Descripción" },
+                    { col:"nivel", label:"Nivel" },
+                    { col:"wcag", label:"WCAG" },
+                    { col:null, label:"", hidden:true },
+                    { col:"status", label:"Estado" },
+                    { col:null, label:"Scope" },
+                  ].map((h, i) => (
+                    <span key={i} role="columnheader" style={S.hdr} aria-hidden={h.hidden || undefined}>
+                      {h.col ? (
+                        <button
+                          onClick={() => toggleSort(h.col)}
+                          style={{ background:"none", border:"none", cursor:"pointer", padding:0, color:"inherit", font:"inherit", textTransform:"inherit", letterSpacing:"inherit", fontWeight:"inherit", display:"inline-flex", alignItems:"center", gap:"0.25rem" }}
+                          aria-label={`Ordenar por ${h.label}`}
+                        >
+                          {h.label}
+                          {sortCol === h.col ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+                        </button>
+                      ) : h.label}
+                    </span>
+                  ))}
                 </div>
 
                 {/* Rows */}
                 <div style={{ display:"flex", flexDirection:"column", gap:"4px" }}>
-                  {filtered.map(item => {
+                  {sorted.map(item => {
                     const status = getStatus(checks, item.id);
                     const isOpen = expanded === item.id;
                     const detailsId = `details-${item.id}`;

@@ -122,4 +122,38 @@ export function checkStorageCapacity() {
   return "ok";
 }
 
+export function exportCsv(items, checks, getStatusFn, getScopeFn, domain) {
+  const headers = ["ID", "Área", "Categoría", "Descripción", "WCAG", "Nivel", "Severidad", "Tipo", "Estado", "Scope"];
+  const esc = (v) => `"${String(v || "").replace(/"/g, '""')}"`;
+  const rows = items.map(i => [
+    i.id, i.area, i.cat, i.item, i.wcag, i.nivel, i.sev, i.tipo,
+    getStatusFn(checks, i.id), getScopeFn(checks, i.id) || "",
+  ].map(esc).join(","));
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `audit-${(domain || "export").replace(/[^a-z0-9]/gi, "-")}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function copyAsTable(items, checks, getStatusFn, getScopeFn) {
+  const headers = ["ID", "Sev.", "Descripción", "WCAG", "Nivel", "Estado", "Scope"];
+  const htmlRows = items.map(i =>
+    `<tr><td>${i.id}</td><td>${i.sev}</td><td>${i.item}</td><td>${i.wcag}</td><td>${i.nivel}</td><td>${getStatusFn(checks, i.id)}</td><td>${getScopeFn(checks, i.id) || "—"}</td></tr>`
+  ).join("");
+  const html = `<table><thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${htmlRows}</tbody></table>`;
+  const plain = [headers.join("\t"), ...items.map(i =>
+    [i.id, i.sev, i.item, i.wcag, i.nivel, getStatusFn(checks, i.id), getScopeFn(checks, i.id) || "—"].join("\t")
+  )].join("\n");
+  navigator.clipboard.write([
+    new ClipboardItem({
+      "text/html": new Blob([html], { type: "text/html" }),
+      "text/plain": new Blob([plain], { type: "text/plain" }),
+    })
+  ]);
+}
+
 export { deleteScreenshots };
